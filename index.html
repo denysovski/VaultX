@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="theme-color" content="#121211" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preload" href="/fonts/expose-900.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/rx100-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/expose-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/expose-700.woff2" as="font" type="font/woff2" crossorigin />
+    <!--app-head-->
+  </head>
+  <body>
+    <div id="root" data-path="<!--app-path-->"><!--app-html--></div>
+    <noscript><p style="padding:16px">VAULTX needs JavaScript for the bag and checkout. Everything else is readable without it.</p></noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

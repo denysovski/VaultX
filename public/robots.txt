@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /VaultX/checkout
+Disallow: /VaultX/account
+Disallow: /VaultX/order/
+
+Sitemap: https://denysovski.github.io/VaultX/sitemap.xml
