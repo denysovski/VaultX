@@ -23,6 +23,16 @@ A concept e-shop for a Prague label: a greyscale video hero with live tracker bo
 
 ---
 
+## Description
+
+> Black and white dystopian streetwear store. React + TypeScript single-page app with a glitch video hero, live tracker boxes, prerendered routes, verified Google sign-in, localStorage accounts and a custom checkout.
+
+**Tags**
+
+`react` `typescript` `vite` `react-router` `ecommerce` `online-store` `streetwear` `fashion` `dystopian` `black-and-white` `minimal` `spa` `prerendering` `seo` `canvas` `video-background` `glitch-effect` `google-sign-in` `localstorage` `checkout` `responsive-design` `accessibility` `github-pages`
+
+---
+
 ## At a glance
 
 | | |
