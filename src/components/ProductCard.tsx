@@ -12,7 +12,7 @@ export function ProductCard({ product: p, priority, vt }: { product: Product; pr
         <div className="card__frame">
           <ProductImg src={p.image} alt={p.name} priority={priority} />
           <span className="card__code mono" aria-hidden="true">{p.code}</span>
-          {left === 0 ? <span className="card__flag mono">Sold out</span> : left < 6 ? <span className="card__flag mono">Low stock</span> : p.isNew ? <span className="card__flag mono">New</span> : null}
+          {left === 0 ? <span className="card__flag mono">Sold out</span> : left < 6 ? <span className="card__flag mono">{left === 1 ? 'Last piece' : `${left} pieces left`}</span> : p.isNew ? <span className="card__flag mono">New</span> : null}
           <span className="card__track" aria-hidden="true">
             <span className="mono">{p.spec}</span>
           </span>

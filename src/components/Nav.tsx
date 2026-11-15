@@ -3,7 +3,6 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import { useStore } from '../lib/store';
 import { CATEGORIES, PRODUCTS } from '../data/products';
 import { money } from '../lib/format';
-import { Mark } from './Hud';
 
 const LINKS = [
   { to: '/shop?new=1', label: 'New arrivals' },
@@ -34,80 +33,85 @@ function SearchIcon() {
 function NavSearch({ onOpen }: { onOpen: (v: boolean) => void }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
-  const [active, setActive] = useState(0);
+  const [shown, setShown] = useState(''); // the query results are listed for (set on Enter)
+  const [active, setActive] = useState(-1);
   const input = useRef<HTMLInputElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const nav = useNavigate();
   const loc = useLocation();
 
   const hits = useMemo(() => {
-    const s = q.trim().toLowerCase();
+    const s = shown.toLowerCase();
     if (!s) return [];
     return PRODUCTS.filter((p) => `${p.name} ${p.category} ${p.spec}`.toLowerCase().includes(s)).slice(0, 6);
-  }, [q]);
+  }, [shown]);
 
+  const close = () => { setOpen(false); setQ(''); setShown(''); setActive(-1); };
   useEffect(() => {
     onOpen(open);
-    if (open) input.current?.focus();
+    if (open) input.current?.focus({ preventScroll: true });
   }, [open, onOpen]);
-  useEffect(() => setOpen(false), [loc.pathname, loc.search]);
-  useEffect(() => setActive(0), [q]);
+  useEffect(() => close(), [loc.pathname, loc.search]);
   useEffect(() => {
     if (!open) return;
-    const close = (e: MouseEvent) => !box.current?.contains(e.target as Node) && setOpen(false);
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
+    const away = (e: MouseEvent) => !box.current?.contains(e.target as Node) && close();
+    document.addEventListener('mousedown', away);
+    return () => document.removeEventListener('mousedown', away);
   }, [open]);
 
-  const go = () => {
-    if (hits[active] && q) nav(`/shop/${hits[active].slug}`);
-    else if (q.trim()) nav(`/shop?q=${encodeURIComponent(q.trim().slice(0, 60))}`);
-    setQ('');
-    setOpen(false);
+  const enter = () => {
+    const s = q.trim().slice(0, 60);
+    if (!s) return;
+    if (s !== shown) { setShown(s); setActive(-1); return; } // first Enter: show the results
+    if (hits[active]) nav(`/shop/${hits[active].slug}`); // second Enter: open the picked one
+    else nav(`/shop?q=${encodeURIComponent(s)}`); // or every match in the shop
+    close();
   };
 
   return (
     <div ref={box} className={`nsearch${open ? ' nsearch--open' : ''}`}>
-      <button type="button" className="nav__link nsearch__btn" aria-expanded={open} aria-controls="nsearch-input" onClick={() => setOpen((o) => !o)}>
+      <button type="button" className="nav__link nsearch__btn" aria-expanded={open} aria-controls="nsearch-input" aria-label={open ? 'Close search' : 'Search'} onClick={() => (open ? close() : setOpen(true))}>
         <SearchIcon />
-        <span className="nav__hide-sm">Search</span>
+        <span className="nsearch__word nav__hide-sm">Search</span>
       </button>
       <div className="nsearch__field">
-        <label htmlFor="nsearch-input" className="sr-only">Search products</label>
+        <label htmlFor="nsearch-input" className="sr-only">Search products, press Enter</label>
         <input
           ref={input}
           id="nsearch-input"
           type="search"
           role="combobox"
-          aria-expanded={hits.length > 0}
+          aria-expanded={!!shown}
           aria-controls="nsearch-list"
-          aria-activedescendant={hits.length ? `ns-${active}` : undefined}
+          aria-activedescendant={active >= 0 ? `ns-${active}` : undefined}
           autoComplete="off"
           enterKeyHint="search"
           maxLength={60}
-          placeholder="Type to search"
           value={q}
           tabIndex={open ? 0 : -1}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => { setQ(e.target.value); if (shown) { setShown(''); setActive(-1); } }}
           onKeyDown={(e) => {
-            if (e.key === 'Escape') setOpen(false);
-            if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(hits.length - 1, a + 1)); }
-            if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(0, a - 1)); }
-            if (e.key === 'Enter') { e.preventDefault(); go(); }
+            if (e.key === 'Escape') close();
+            if (e.key === 'ArrowDown' && hits.length) { e.preventDefault(); setActive((a) => Math.min(hits.length - 1, a + 1)); }
+            if (e.key === 'ArrowUp' && hits.length) { e.preventDefault(); setActive((a) => Math.max(-1, a - 1)); }
+            if (e.key === 'Enter') { e.preventDefault(); enter(); }
           }}
         />
       </div>
-      {open && q.trim() && (
-        <ul id="nsearch-list" className="nsearch__list" role="listbox" aria-label="Matching products">
+      {open && shown && (
+        <ul key={shown} id="nsearch-list" className="nsearch__list" role="listbox" aria-label={`Results for ${shown}`}>
           {hits.length ? (
-            hits.map((p, i) => (
-              <li key={p.slug} id={`ns-${i}`} role="option" aria-selected={i === active} className={i === active ? 'is-active' : ''} onMouseEnter={() => setActive(i)} onMouseDown={(e) => { e.preventDefault(); nav(`/shop/${p.slug}`); setQ(''); setOpen(false); }}>
-                <span>{p.name}</span>
-                <span className="mono tnum">{money(p.price)}</span>
-              </li>
-            ))
+            <>
+              {hits.map((p, i) => (
+                <li key={p.slug} id={`ns-${i}`} style={{ ['--i' as string]: i }} role="option" aria-selected={i === active} className={i === active ? 'is-active' : ''} onMouseEnter={() => setActive(i)} onMouseDown={(e) => { e.preventDefault(); nav(`/shop/${p.slug}`); close(); }}>
+                  <span>{p.name}</span>
+                  <span className="mono tnum">{money(p.price)}</span>
+                </li>
+              ))}
+              <li className="nsearch__all" style={{ ['--i' as string]: hits.length }} onMouseDown={(e) => { e.preventDefault(); nav(`/shop?q=${encodeURIComponent(shown)}`); close(); }}>See all in the shop</li>
+            </>
           ) : (
-            <li className="nsearch__none">No match. Press Enter to search the shop.</li>
+            <li className="nsearch__none">Nothing for "{shown}".</li>
           )}
         </ul>
       )}
@@ -193,7 +197,6 @@ export function Nav() {
           </nav>
         </div>
         <Link to="/" className="nav__logo" aria-label="VAULTX home">
-          <Mark className="nav__mark" />
           <span>VAULTX</span>
         </Link>
         <div className="nav__right">

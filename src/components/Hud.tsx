@@ -11,6 +11,8 @@ const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefe
 export function Type({ children, as: Tag = 'span', className, delay = 0, speed = 14 }: { children: string; as?: 'span' | 'p' | 'h1' | 'h2'; className?: string; delay?: number; speed?: number }) {
   const ref = useRef<HTMLElement>(null);
   const [n, setN] = useState(-1); // -1: not started (text hidden but space kept)
+  // half a second longer per line than plain char-by-char, so the text reads like it is being typed
+  const step = speed + 500 / Math.max(1, children.length);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -24,7 +26,7 @@ export function Type({ children, as: Tag = 'span', className, delay = 0, speed =
       io.disconnect();
       const start = performance.now() + delay;
       const tick = (now: number) => {
-        const k = Math.max(0, Math.floor((now - start) / speed));
+        const k = Math.max(0, Math.floor((now - start) / step));
         setN(Math.min(children.length, k));
         if (k < children.length) t = requestAnimationFrame(tick);
       };
@@ -35,7 +37,7 @@ export function Type({ children, as: Tag = 'span', className, delay = 0, speed =
       io.disconnect();
       cancelAnimationFrame(t);
     };
-  }, [children, delay, speed]);
+  }, [children, delay, step]);
   const shown = n < 0 ? '' : children.slice(0, n);
   return (
     <Tag ref={ref as never} className={`type ${className ?? ''}`}>

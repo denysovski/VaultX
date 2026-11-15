@@ -38,7 +38,6 @@ export default function Home() {
           <p className="hud__t hud--mr mono"><Type delay={500}>{'Heavy cloth\n480 to 620 gsm'}</Type></p>
           <Link to="/shop?new=1" className="hud--bl hud__cta">Shop new arrivals</Link>
           <p className="hud__t hud--bc mono hud__big"><Clock /> / 50.0755 N 14.4378 E</p>
-          <p className="hud--br hud__big mono">Scroll<br />for more</p>
         </div>
       </section>
 

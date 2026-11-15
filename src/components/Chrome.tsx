@@ -87,9 +87,6 @@ export function Footer() {
           <Link to="/terms#returns">Returns policy</Link>
         </nav>
       </div>
-      <p className="footer__noise mono" aria-hidden="true">
-        {'//'} heavy cloth {'//'} no restock {'//'} built for the night shift {'//'} worn until it falls apart {'//'} after-hours city {'//'}
-      </p>
       <div className="footer__base mono">
         <p>© {new Date().getFullYear()} VAULTX / Prague. Concept store, no real payments.</p>
         <p>

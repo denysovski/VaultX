@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import { getProduct, PRODUCTS, SHIPPING_METHODS, FREE_SHIPPING_FROM, CATEGORIES } from '../data/products';
 import { useStore } from '../lib/store';
@@ -121,17 +121,15 @@ export default function ProductPage() {
           </ul>
 
           <div className="accordion">
-            <details open>
-              <summary>Description</summary>
+            <Fold title="Description" open>
               <p>{p.description}</p>
-            </details>
-            <details>
-              <summary>Shipping and delivery</summary>
+            </Fold>
+            <Fold title="Shipping and delivery">
               <ul className="plain">
                 {SHIPPING_METHODS.map((m) => <li key={m.id}>{m.label}: {m.detail}, <span className="tnum">{money(m.price)}</span></li>)}
               </ul>
               <p>Late, damaged or missing? <Link to="/help#issue" className="text-link">Report it here</Link>.</p>
-            </details>
+            </Fold>
           </div>
         </div>
       </div>
@@ -202,5 +200,21 @@ function SizeGuide({ open, onClose, category }: { open: boolean; onClose: () => 
         <p className="small muted">{g.note}</p>
       </div>
     </dialog>
+  );
+}
+
+/** Accordion row that slides open and closed (grid rows 0fr to 1fr). */
+function Fold({ title, open: start = false, children }: { title: string; open?: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(start);
+  const id = useId();
+  return (
+    <div className={`fold${open ? ' is-open' : ''}`}>
+      <h2 className="fold__h">
+        <button type="button" className="fold__btn" aria-expanded={open} aria-controls={id} onClick={() => setOpen((o) => !o)}>{title}</button>
+      </h2>
+      <div id={id} className="fold__body" role="region" aria-label={title} inert={!open}>
+        <div className="fold__inner">{children}</div>
+      </div>
+    </div>
   );
 }

@@ -5,6 +5,8 @@ import { login, register, sessionEnded, getSession, changePassword } from '../li
 import * as v from '../lib/validate';
 import { money } from '../lib/format';
 import { Field, Button, Check } from '../components/Field';
+import { Img } from '../components/Img';
+import { HudGrid, Mark, Type } from '../components/Hud';
 
 export default function Account() {
   const { user, ready, orders, logout } = useStore();
@@ -151,8 +153,21 @@ function AuthForms() {
 
   return (
     <div className="account account--auth" data-theme="light">
-      <h1 className="page-title">Account</h1>
+      <aside className="auth__side" aria-hidden="true">
+        <Img src="look/suit" alt="" sizes="(min-width: 900px) 50vw, 100vw" priority className="auth__img" />
+        <span className="auth__noise" />
+        <HudGrid circles={false} />
+        <p className="auth__hud auth__hud--tl mono"><Type>{'Access point\nPRG-01'}</Type></p>
+        <p className="auth__hud auth__hud--tr mono"><Type delay={200}>{mode === 'in' ? 'Status\nawaiting id' : 'Status\nnew member'}</Type></p>
+        <Mark className="auth__mark" />
+        <ul className="auth__perks mono">
+          <li><Type delay={400}>Track every order</Type></li>
+          <li><Type delay={550}>Early access to each drop</Type></li>
+          <li><Type delay={700}>Your bag, saved on this device</Type></li>
+        </ul>
+      </aside>
       <div className="auth stagger">
+        <h1 className="auth__title">{mode === 'in' ? 'Sign in' : 'Create account'}</h1>
         <div className="auth__tabs" role="tablist" aria-label="Account">
           <button role="tab" aria-selected={mode === 'in'} className={`tab${mode === 'in' ? ' is-on' : ''}`} onClick={tab('in')}>Sign in</button>
           <button role="tab" aria-selected={mode === 'up'} className={`tab${mode === 'up' ? ' is-on' : ''}`} onClick={tab('up')}>Create account</button>
