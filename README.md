@@ -23,12 +23,15 @@
 
 ## What's inside
 
-- **Landing page** with a black and white video, tracker boxes that follow movement, and short glitches.
-- **Shop** with categories, search, sorting and size filters.
+- **Landing page** with a black and white video. Tracker boxes follow the clothes (hat, pockets, sleeve).
+- **Shop** with filters on the side. Mix categories, sizes and a price range.
+- **Search** right in the top bar.
 - **Product page** with sizes, stock and a size guide.
 - **Bag and checkout** with custom forms. Nothing is really paid.
 - **Account** with sign up, sign in, "remember me" and password change.
 - **Help page** for tracking orders and reporting delivery problems.
+- **About us** and pages for creators, artists and designers who want to work with us.
+- **Newsletter popup** with a code for the first order.
 - Works on phone, tablet and desktop.
 
 ## Style
@@ -43,9 +46,10 @@
 
 | | |
 |---|---|
-| ![New arrivals](docs/screens/02-arrivals.jpg) | ![Mirror](docs/screens/03-mirror.jpg) |
+| ![New arrivals](docs/screens/02-arrivals.jpg) | ![Editorial band](docs/screens/03-band.jpg) |
 | ![Shop](docs/screens/10-shop.jpg) | ![Product](docs/screens/12-product.jpg) |
 | ![Checkout](docs/screens/15-checkout.jpg) | ![Account](docs/screens/20-account.jpg) |
+| ![About us](docs/screens/30-about.jpg) | ![For artists](docs/screens/31-collab.jpg) |
 
 | | | | |
 |:---:|:---:|:---:|:---:|
@@ -85,8 +89,8 @@ Pushing to `main` deploys the site to GitHub Pages.
 ## Credits
 
 - Product images: Pinterest (linked, not stored here; rights belong to their owners).
-- Lookbook photos: [Christian Agbede](https://unsplash.com/@chriscreations__) on Unsplash.
+- Photos: [Christian Agbede](https://unsplash.com/@chriscreations__) and [Alex Gruber](https://unsplash.com/@alex_gruber) on Unsplash.
 - Fonts: Fontshare.
-- Hero video: provided by the project owner.
+- Hero video: provided by the project owner. Tracking boxes made with OpenCV (`scripts/track-video.py`).
 
 <div align="center"><sub>Portfolio project. Nothing is sold.</sub></div>

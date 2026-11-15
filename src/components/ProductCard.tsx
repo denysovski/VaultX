@@ -4,10 +4,10 @@ import { totalStock } from '../data/products';
 import { money } from '../lib/format';
 import { ProductImg } from './Img';
 
-export function ProductCard({ product: p, priority }: { product: Product; priority?: boolean }) {
+export function ProductCard({ product: p, priority, vt }: { product: Product; priority?: boolean; vt?: boolean }) {
   const left = totalStock(p);
   return (
-    <article className="card">
+    <article className="card" style={vt ? ({ viewTransitionName: `card-${p.slug}` } as React.CSSProperties) : undefined}>
       <Link to={`/shop/${p.slug}`} className="card__link">
         <div className="card__frame">
           <ProductImg src={p.image} alt={p.name} priority={priority} />

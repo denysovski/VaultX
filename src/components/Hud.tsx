@@ -1,64 +1,88 @@
 import { useEffect, useRef, useState } from 'react';
+import { assetUrl } from '../lib/format';
 
-const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/#+.:_';
+const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * Text that resolves from random glyphs into its real value whenever it
- * changes (the "decoding" look on the moodboard). Purely decorative, so the
- * real text is what screen readers get.
+ * Types its text out quickly, letter by letter, once it scrolls into view.
+ * The full text is in the DOM from the start (for screen readers and SEO);
+ * only the visible copy is animated.
  */
-export function Scramble({ text, className, every }: { text: string | string[]; className?: string; every?: number }) {
-  const list = Array.isArray(text) ? text : [text];
-  const [idx, setIdx] = useState(0);
-  const [shown, setShown] = useState(list[0]);
-  const target = list[idx % list.length];
-
+export function Type({ children, as: Tag = 'span', className, delay = 0, speed = 14 }: { children: string; as?: 'span' | 'p' | 'h1' | 'h2'; className?: string; delay?: number; speed?: number }) {
+  const ref = useRef<HTMLElement>(null);
+  const [n, setN] = useState(-1); // -1: not started (text hidden but space kept)
   useEffect(() => {
-    if (!every || list.length < 2) return;
-    const t = setInterval(() => setIdx((i) => i + 1), every);
-    return () => clearInterval(t);
-  }, [every, list.length]);
-
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setShown(target);
+    const el = ref.current;
+    if (!el) return;
+    if (reduced()) {
+      setN(children.length);
       return;
     }
-    let frame = 0;
-    let raf = 0;
-    const total = 18;
-    const tick = () => {
-      frame++;
-      const done = Math.floor((frame / total) * target.length);
-      setShown(
-        target
-          .split('')
-          .map((ch, i) => (i < done || ch === ' ' || ch === '\n' ? ch : GLYPHS[(Math.random() * GLYPHS.length) | 0]))
-          .join(''),
-      );
-      if (frame < total) raf = window.setTimeout(tick, 34);
+    let t = 0;
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      const start = performance.now() + delay;
+      const tick = (now: number) => {
+        const k = Math.max(0, Math.floor((now - start) / speed));
+        setN(Math.min(children.length, k));
+        if (k < children.length) t = requestAnimationFrame(tick);
+      };
+      t = requestAnimationFrame(tick);
+    });
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      cancelAnimationFrame(t);
     };
-    tick();
-    return () => clearTimeout(raf);
-  }, [target]);
-
+  }, [children, delay, speed]);
+  const shown = n < 0 ? '' : children.slice(0, n);
   return (
-    <span className={className}>
-      <span className="sr-only">{target}</span>
-      <span aria-hidden="true">{shown}</span>
-    </span>
+    <Tag ref={ref as never} className={`type ${className ?? ''}`}>
+      <span className="sr-only">{children}</span>
+      <span aria-hidden="true" className="type__ghost">{children}</span>
+      <span aria-hidden="true" className="type__live">
+        {shown}
+        {n >= 0 && n < children.length && <span className="type__caret" />}
+      </span>
+    </Tag>
   );
 }
 
-/** Thin grid lines with + markers and circle markers, like a viewfinder. */
+/** The VX mark: a V set inside an X. */
+export function Mark({ className, title }: { className?: string; title?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 64 64" role={title ? 'img' : undefined} aria-label={title} aria-hidden={title ? undefined : true} fill="none" stroke="currentColor" strokeLinecap="square" strokeLinejoin="miter">
+      <path d="M10 10 L54 54 M54 10 L10 54" strokeWidth="3" />
+      <path d="M21 10 L32 23 L43 10" strokeWidth="3" />
+    </svg>
+  );
+}
+
+/**
+ * Centre text that flows around the VX mark: the text is split into two
+ * halves at a word break and set either side of the mark.
+ */
+export function AroundMark({ text, as: Tag = 'p', className }: { text: string; as?: 'p' | 'h1' | 'h2'; className?: string }) {
+  const words = text.split(' ');
+  // split where the character count is closest to half, so both sides of the mark carry equal weight
+  let mid = 1, best = Infinity, acc = 0;
+  words.forEach((w, i) => { acc += w.length + 1; const d = Math.abs(acc - text.length / 2); if (d < best && i < words.length - 1) { best = d; mid = i + 1; } });
+  return (
+    <Tag className={`around ${className ?? ''}`}>
+      <Type as="span" className="around__l">{words.slice(0, mid).join(' ')}</Type>
+      <Mark className="around__mark" />
+      <Type as="span" className="around__r" delay={120}>{words.slice(mid).join(' ')}</Type>
+    </Tag>
+  );
+}
+
+/** Thin solid grid lines with + markers and circle markers. */
 export function HudGrid({ circles = true }: { circles?: boolean }) {
   return (
     <div className="hud-grid" aria-hidden="true">
-      <span className="hud-grid__v" style={{ left: '25%' }} />
-      <span className="hud-grid__v" style={{ left: '50%' }} />
-      <span className="hud-grid__v" style={{ left: '75%' }} />
-      <span className="hud-grid__h" style={{ top: '33.333%' }} />
-      <span className="hud-grid__h" style={{ top: '66.666%' }} />
+      {[25, 50, 75].map((x) => <span key={x} className="hud-grid__v" style={{ left: `${x}%` }} />)}
+      {[33.333, 66.666].map((y) => <span key={y} className="hud-grid__h" style={{ top: `${y}%` }} />)}
       {[25, 75].map((x) => [33.333, 66.666].map((y) => <span key={`${x}-${y}`} className="hud-plus" style={{ left: `${x}%`, top: `${y}%` }} />))}
       {circles && (
         <>
@@ -70,29 +94,20 @@ export function HudGrid({ circles = true }: { circles?: boolean }) {
   );
 }
 
-interface Track {
-  x: number;
-  y: number;
+interface TrackData {
+  fps: number;
   w: number;
   h: number;
-  tx: number;
-  ty: number;
-  tw: number;
-  th: number;
-  conf: number;
-  tag: string;
+  tracks: { id: string; label: string; sub: string; f: number[][] }[];
 }
 
-const TAGS = ['SUBJ', 'FABRIC', 'DENIM', 'HOOD', 'LIGHT', 'PILLAR', 'MOTION', 'SIGNAL'];
-
 /**
- * Background video with two canvas effects drawn on top:
- * - tracker boxes that follow the brightest and most-moving regions
- *   (frame analysis on a 64x36 copy, about 12 times a second)
- * - short glitch bursts every few seconds: horizontal slices of the current
- *   frame shifted sideways for a fraction of a second
- * Both stop when the video is off screen, the tab is hidden, or the visitor
- * prefers reduced motion.
+ * Background video with a canvas on top that draws:
+ * - tracker boxes on the person's clothes (hat, pockets, sleeve), played back
+ *   from boxes measured offline with OpenCV (scripts/track-video.py) and eased
+ *   slowly towards each new position
+ * - a short glitch burst every few seconds (slices of the frame shifted sideways)
+ * Paused off screen, in background tabs, and for reduced motion.
  */
 export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: string; srcSmall?: string }) {
   const video = useRef<HTMLVideoElement>(null);
@@ -102,26 +117,24 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
     const v = video.current;
     const c = canvas.current;
     if (!v || !c) return;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) {
+    if (reduced()) {
       v.pause();
       return;
     }
     v.play().catch(() => {});
     const ctx = c.getContext('2d')!;
-    const small = document.createElement('canvas');
-    const SW = 64;
-    const SH = 36;
-    small.width = SW;
-    small.height = SH;
-    const sctx = small.getContext('2d', { willReadFrequently: true })!;
-    let prev: Uint8ClampedArray | null = null;
-    const tracks: Track[] = [];
+    let data: TrackData | null = null;
+    fetch(assetUrl('video/tracks.json'))
+      .then((r) => r.json())
+      .then((d) => (data = d))
+      .catch(() => {});
+
+    const shown: { x: number; y: number; w: number; h: number; a: number; conf: number }[] = [];
     let visible = true;
     let raf = 0;
-    let last = 0;
     let glitchUntil = 0;
-    let nextGlitch = performance.now() + 2500;
+    let nextGlitch = performance.now() + 4000;
+    let nextConf = 0;
 
     const io = new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
@@ -139,121 +152,89 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
     resize();
     window.addEventListener('resize', resize);
 
-    // Maps a point in the video frame to the canvas, matching object-fit: cover.
+    // object-fit: cover mapping from video pixels to canvas pixels
     const cover = () => {
       const cw = c.clientWidth;
       const ch = c.clientHeight;
-      const vw = v.videoWidth || 16;
-      const vh = v.videoHeight || 9;
+      const vw = v.videoWidth || 1280;
+      const vh = v.videoHeight || 720;
       const s = Math.max(cw / vw, ch / vh);
       return { s, ox: (cw - vw * s) / 2, oy: (ch - vh * s) / 2, vw, vh };
-    };
-
-    const analyse = () => {
-      sctx.drawImage(v, 0, 0, SW, SH);
-      const px = sctx.getImageData(0, 0, SW, SH).data;
-      const cells: { x: number; y: number; score: number }[] = [];
-      const CW = 8;
-      const CH = 6;
-      for (let cy = 0; cy < SH; cy += CH) {
-        for (let cx = 0; cx < SW; cx += CW) {
-          let bright = 0;
-          let motion = 0;
-          for (let y = cy; y < cy + CH; y++) {
-            for (let x = cx; x < cx + CW; x++) {
-              const i = (y * SW + x) * 4;
-              bright += px[i];
-              if (prev) motion += Math.abs(px[i] - prev[i]);
-            }
-          }
-          const n = CW * CH;
-          cells.push({ x: cx, y: cy, score: (bright / n / 255) * 0.6 + (motion / n / 40) * 1.4 });
-        }
-      }
-      prev = new Uint8ClampedArray(px);
-      cells.sort((a, b) => b.score - a.score);
-      const { s, ox, oy, vw } = cover();
-      const k = vw / SW;
-      const picks: typeof cells = [];
-      for (const cell of cells) {
-        if (picks.length >= 4) break;
-        if (picks.every((q) => Math.abs(q.x - cell.x) > CW || Math.abs(q.y - cell.y) > CH)) picks.push(cell);
-      }
-      const shrink = c.clientWidth < 700 ? 0.55 : 0.85;
-      picks.forEach((p, i) => {
-        const w = CW * k * s * shrink * (1 + ((i * 37) % 7) / 10);
-        const h = CH * k * s * shrink * (1.1 + ((i * 53) % 5) / 10);
-        const tx = ox + p.x * k * s - w * 0.05;
-        const ty = oy + p.y * k * s - h * 0.05;
-        const t = tracks[i];
-        if (!t) tracks[i] = { x: tx, y: ty, w, h, tx, ty, tw: w, th: h, conf: 0.6 + Math.min(p.score, 0.39), tag: TAGS[(Math.random() * TAGS.length) | 0] };
-        else {
-          Object.assign(t, { tx, ty, tw: w, th: h, conf: Math.min(0.99, 0.55 + p.score * 0.6) });
-          if (Math.random() < 0.04) t.tag = TAGS[(Math.random() * TAGS.length) | 0];
-        }
-      });
-      tracks.length = picks.length;
     };
 
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
       if (!visible || document.hidden || v.readyState < 2) return;
-      if (now - last > 85) {
-        analyse();
-        last = now;
-      }
       const W = c.clientWidth;
       const H = c.clientHeight;
       ctx.clearRect(0, 0, W, H);
+      const m = cover();
 
-      // glitch burst
       if (now > nextGlitch) {
-        glitchUntil = now + 160 + Math.random() * 220;
-        nextGlitch = now + 4000 + Math.random() * 5000;
+        glitchUntil = now + 140 + Math.random() * 180;
+        nextGlitch = now + 6000 + Math.random() * 6000;
       }
       if (now < glitchUntil) {
-        const { s, ox, oy, vw, vh } = cover();
-        const slices = 5 + ((Math.random() * 6) | 0);
+        const slices = 4 + ((Math.random() * 5) | 0);
         for (let i = 0; i < slices; i++) {
-          const sy = Math.random() * vh;
-          const sh = 4 + Math.random() * vh * 0.06;
-          const shift = (Math.random() - 0.5) * 70;
-          ctx.drawImage(v, 0, sy, vw, sh, ox + shift, oy + sy * s, vw * s, sh * s);
+          const sy = Math.random() * m.vh;
+          const sh = 4 + Math.random() * m.vh * 0.05;
+          const shift = (Math.random() - 0.5) * 60;
+          ctx.drawImage(v, 0, sy, m.vw, sh, m.ox + shift, m.oy + sy * m.s, m.vw * m.s, sh * m.s);
         }
-        ctx.fillStyle = 'rgba(235,234,230,0.06)';
-        ctx.fillRect(0, Math.random() * H, W, 2 + Math.random() * 6);
       }
 
-      // tracker boxes
-      ctx.lineWidth = 1;
-      ctx.font = '10px RX100, ui-monospace, monospace';
+      if (!data) return;
+      const frame = Math.floor(v.currentTime * data.fps);
+      const k = m.vw / data.w;
+      const updateConf = now > nextConf;
+      if (updateConf) nextConf = now + 1400;
+      ctx.font = '11px RX100, ui-monospace, monospace';
       ctx.textBaseline = 'top';
-      tracks.forEach((t, i) => {
-        t.x += (t.tx - t.x) * 0.12;
-        t.y += (t.ty - t.y) * 0.12;
-        t.w += (t.tw - t.w) * 0.12;
-        t.h += (t.th - t.h) * 0.12;
-        ctx.strokeStyle = 'rgba(235,234,230,0.85)';
-        ctx.strokeRect(Math.round(t.x) + 0.5, Math.round(t.y) + 0.5, Math.round(t.w), Math.round(t.h));
-        // corner ticks
-        const L = 6;
+      ctx.lineWidth = 1;
+
+      data.tracks.forEach((t, i) => {
+        const f = t.f[Math.min(frame, t.f.length - 1)];
+        const tx = m.ox + f[0] * k * m.s;
+        const ty = m.oy + f[1] * k * m.s;
+        const tw = f[2] * k * m.s;
+        const th = f[3] * k * m.s;
+        let b = shown[i];
+        if (!b) b = shown[i] = { x: tx, y: ty, w: tw, h: th, a: 0, conf: 0.9 };
+        // slow easing: boxes drift after the clothes instead of snapping to them
+        const e = 0.045;
+        b.x += (tx - b.x) * e;
+        b.y += (ty - b.y) * e;
+        b.w += (tw - b.w) * e;
+        b.h += (th - b.h) * e;
+        b.a = Math.min(1, b.a + 0.008); // each box fades in slowly
+        if (updateConf) b.conf = 0.86 + Math.random() * 0.12;
+        const alpha = Math.min(1, Math.max(0, b.a * 1.6 - i * 0.25));
+        if (alpha <= 0) return;
+
+        ctx.strokeStyle = `rgba(236,236,234,${0.75 * alpha})`;
+        ctx.strokeRect(Math.round(b.x) + 0.5, Math.round(b.y) + 0.5, Math.round(b.w), Math.round(b.h));
+        const L = 7;
+        ctx.strokeStyle = `rgba(236,236,234,${alpha})`;
         ctx.beginPath();
-        [[t.x, t.y], [t.x + t.w, t.y], [t.x, t.y + t.h], [t.x + t.w, t.y + t.h]].forEach(([x, y]) => {
+        for (const [x, y] of [[b.x, b.y], [b.x + b.w, b.y], [b.x, b.y + b.h], [b.x + b.w, b.y + b.h]]) {
           ctx.moveTo(x - L, y);
           ctx.lineTo(x + L, y);
           ctx.moveTo(x, y - L);
           ctx.lineTo(x, y + L);
-        });
+        }
         ctx.stroke();
-        ctx.fillStyle = 'rgba(235,234,230,0.92)';
-        ctx.fillText(`${t.tag} ${t.conf.toFixed(2)}`, t.x + 3, t.y + t.h + 4);
-        ctx.fillText(`X${Math.round(t.x)} Y${Math.round(t.y)}`, t.x + 3, t.y - 13);
-        if (i > 0) {
-          const p = tracks[i - 1];
-          ctx.strokeStyle = 'rgba(235,234,230,0.35)';
+        ctx.fillStyle = `rgba(236,236,234,${alpha})`;
+        ctx.fillText(`${t.label} ${b.conf.toFixed(2)}`, b.x + 4, b.y - 15);
+        ctx.fillStyle = `rgba(236,236,234,${0.6 * alpha})`;
+        ctx.fillText(t.sub, b.x + 4, b.y + b.h + 5);
+        // a thin leader line from each box to the next one
+        const n = shown[i + 1];
+        if (n && alpha > 0.2) {
+          ctx.strokeStyle = `rgba(236,236,234,${0.25 * alpha})`;
           ctx.beginPath();
-          ctx.moveTo(p.x + p.w / 2, p.y + p.h / 2);
-          ctx.lineTo(t.x + t.w / 2, t.y + t.h / 2);
+          ctx.moveTo(b.x + b.w, b.y + b.h / 2);
+          ctx.lineTo(n.x, n.y + n.h / 2);
           ctx.stroke();
         }
       });

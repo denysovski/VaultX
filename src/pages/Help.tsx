@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { useStore, orderStatus, type Order } from '../lib/store';
 import * as v from '../lib/validate';
 import { deliveryWindow } from '../lib/format';
@@ -204,6 +204,10 @@ function Returns() {
 
 const TOPICS = [
   { value: 'order', label: 'An order I placed' },
+  { value: 'collab-creators', label: 'Collaboration: creators' },
+  { value: 'collab-artists', label: 'Collaboration: artists' },
+  { value: 'collab-designers', label: 'Collaboration: designers' },
+  { value: 'collab-other', label: 'Collaboration: something else' },
   { value: 'sizing', label: 'Sizing and fit' },
   { value: 'product', label: 'A product question' },
   { value: 'press', label: 'Press and collaborations' },
@@ -214,7 +218,9 @@ function Contact() {
   const { saveTicket } = useStore();
   const [name, setName] = useState('');
   const [mail, setMail] = useState('');
-  const [topic, setTopic] = useState('order');
+  const [params] = useSearchParams();
+  const asked = params.get('topic');
+  const [topic, setTopic] = useState(TOPICS.some((t) => t.value === asked) ? asked! : 'order');
   const [msg, setMsg] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);

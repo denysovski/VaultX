@@ -15,7 +15,7 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').repl
 // JSON-LD lives in a <script>; escape "<" so no value can close the tag.
 const ld = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
 
-const routes = ['/', '/shop', ...PRODUCTS.map((p) => `/shop/${p.slug}`), '/lookbook', '/help', '/account', '/checkout', '/privacy', '/terms'];
+const routes = ['/', '/shop', ...PRODUCTS.map((p) => `/shop/${p.slug}`), '/about', '/collab/creators', '/collab/artists', '/collab/designers', '/collab/outsiders', '/help', '/account', '/checkout', '/privacy', '/terms'];
 
 function head(m) {
   const url = canonical(m.path);

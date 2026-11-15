@@ -13,6 +13,7 @@ import path from 'node:path';
 const DIR = process.argv[2];
 const FRAME = 0.8; // width / height of the card
 const FILL = 0.8; // share of the frame the garment should occupy
+const prev = fs.existsSync('src/data/fit.json') ? JSON.parse(fs.readFileSync('src/data/fit.json', 'utf8')) : {};
 const out = {};
 
 for (const file of fs.readdirSync(DIR)) {
@@ -38,6 +39,7 @@ for (const file of fs.readdirSync(DIR)) {
     x: +((-offX * s) / FRAME * 100).toFixed(2),
     y: +(-offY * s * 100).toFixed(2),
     b: +Math.min(1.35, Math.max(1, 250 / Math.max(bg, 1))).toFixed(3),
+    ...(prev[key]?.clip ? { clip: prev[key].clip } : {}), // hand-set crops survive a re-run
   };
 }
 fs.writeFileSync('src/data/fit.json', JSON.stringify(out, null, 2));

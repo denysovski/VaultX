@@ -1,16 +1,17 @@
 import { Suspense } from 'react';
 import { lazyPage } from './lib/lazy';
-import { Routes, Route, useLocation } from 'react-router';
+import { Routes, Route, Navigate, useLocation } from 'react-router';
 import { StoreProvider } from './lib/store';
 import { Nav } from './components/Nav';
 import { BagDrawer } from './components/Bag';
-import { Footer, Toasts, StorageNotice, OfflineBar, Seo, RouteFocus } from './components/Chrome';
+import { Footer, Toasts, PromoPopup, OfflineBar, Seo, RouteFocus } from './components/Chrome';
 import Home from './pages/Home';
 
 // Every page except the landing page is its own chunk (loaded on demand).
 const Shop = lazyPage(() => import('./pages/Shop'));
 const ProductPage = lazyPage(() => import('./pages/Product'));
-const Lookbook = lazyPage(() => import('./pages/Lookbook'));
+const About = lazyPage(() => import('./pages/About'));
+const Collab = lazyPage(() => import('./pages/Collab'));
 const Checkout = lazyPage(() => import('./pages/Checkout'));
 const OrderDone = lazyPage(() => import('./pages/OrderDone'));
 const Account = lazyPage(() => import('./pages/Account'));
@@ -24,7 +25,8 @@ export function preloadPath(path: string) {
   if (p === '/') return Promise.resolve();
   if (p === '/shop') return Shop.preload();
   if (p.startsWith('/shop/')) return ProductPage.preload();
-  if (p === '/lookbook') return Lookbook.preload();
+  if (p === '/about') return About.preload();
+  if (p.startsWith('/collab/')) return Collab.preload();
   if (p === '/checkout') return Checkout.preload();
   if (p.startsWith('/order/')) return OrderDone.preload();
   if (p === '/account') return Account.preload();
@@ -70,7 +72,9 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/shop/:slug" element={<ProductPage />} />
-            <Route path="/lookbook" element={<Lookbook />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/collab/:group" element={<Collab />} />
+            <Route path="/lookbook" element={<Navigate to="/about" replace />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/order/:id" element={<OrderDone />} />
             <Route path="/account" element={<Account />} />
@@ -85,7 +89,7 @@ export default function App() {
       <Footer />
       <BagDrawer />
       <Toasts />
-      <StorageNotice />
+      <PromoPopup />
     </StoreProvider>
   );
 }

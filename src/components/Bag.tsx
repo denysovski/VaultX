@@ -15,11 +15,13 @@ export function BagDrawer() {
   useEffect(() => {
     document.documentElement.classList.toggle('is-locked', bagOpen);
     if (!bagOpen) {
-      lastFocus.current?.focus?.();
+      lastFocus.current?.focus?.({ preventScroll: true });
       return;
     }
     lastFocus.current = document.activeElement as HTMLElement;
-    panel.current?.focus();
+    // preventScroll: focusing the off-screen panel must not scroll it into view
+    // (that made the drawer jump open, snap back and slide in again)
+    panel.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setBagOpen(false);
       if (e.key === 'Tab' && panel.current) {

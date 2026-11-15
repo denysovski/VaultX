@@ -102,10 +102,14 @@ export function getMeta(pathname: string): Meta {
   }
 
   const fixed: Record<string, Omit<Meta, 'path'>> = {
-    '/lookbook': {
-      title: 'The Bloc, lookbook | VAULTX',
-      description: 'The people and places around VAULTX. Fifteen frames shot by Christian Agbede, from the market to the back seat at 02:40.',
+    '/about': {
+      title: 'About us | VAULTX',
+      description: 'VAULTX makes heavy black clothing in Prague for the people who stay out late. Small drops, no restocks, made to last.',
     },
+    '/collab/creators': { title: 'For creators | VAULTX', description: 'Seeding, paid campaigns and personal codes for creators who want to work with VAULTX.' },
+    '/collab/artists': { title: 'For artists | VAULTX', description: 'One artist a season takes over a VAULTX capsule: prints, labels, packaging and lookbook.' },
+    '/collab/designers': { title: 'For designers | VAULTX', description: 'Design the next VAULTX garments or new features for the store. Paid project work, remote or in Prague.' },
+    '/collab/outsiders': { title: 'For outsiders | VAULTX', description: 'Events, pop-ups, repairs, anything that fits the after-hours city. Tell VAULTX your idea.' },
     '/help': {
       title: 'Help desk: delivery, returns and order tracking | VAULTX',
       description: 'Track an order, report a late, damaged or missing parcel, start a return or message the studio. Replies within one working day.',

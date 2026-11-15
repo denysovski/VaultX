@@ -96,7 +96,8 @@ function PasswordForm({ userId }: { userId: string }) {
 }
 
 function AuthForms() {
-  const [mode, setMode] = useState<'in' | 'up'>('in');
+  const [params] = useSearchParams();
+  const [mode, setMode] = useState<'in' | 'up'>(params.get('mode') === 'up' ? 'up' : 'in');
   const [name, setName] = useState('');
   const [mail, setMail] = useState('');
   const [pass, setPass] = useState('');
@@ -108,7 +109,6 @@ function AuthForms() {
   const [formErr, setFormErr] = useState('');
   const [ended, setEnded] = useState(false);
   const { setUser, toast } = useStore();
-  const [params] = useSearchParams();
   const nav = useNavigate();
   const next = v.safeNext(params.get('next'));
 

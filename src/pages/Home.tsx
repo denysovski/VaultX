@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { PRODUCTS, CATEGORIES } from '../data/products';
 import { ProductCard } from '../components/ProductCard';
-import { GlitchVideo, HudGrid, Scramble } from '../components/Hud';
+import { GlitchVideo, HudGrid, Type, AroundMark } from '../components/Hud';
+import { Img } from '../components/Img';
 import { assetUrl } from '../lib/format';
 import { useReveal } from '../lib/hooks';
 
@@ -21,7 +22,7 @@ function Clock() {
 export default function Home() {
   const fresh = PRODUCTS.filter((p) => p.isNew).slice(0, 8);
   const outer = PRODUCTS.filter((p) => p.category === 'outerwear').slice(0, 4);
-  const mirror = useReveal<HTMLElement>();
+  const band = useReveal<HTMLElement>();
 
   return (
     <>
@@ -29,48 +30,23 @@ export default function Home() {
         <GlitchVideo src={assetUrl('video/hero.mp4')} srcSmall={assetUrl('video/hero-960.mp4')} poster={assetUrl('video/hero-poster.jpg')} />
         <HudGrid />
         <div className="hud hero__hud">
-          <p className="hud__t hud--tl mono">
-            <Scramble text={['The city\nnever sleeps', 'Neither do\nwe']} every={6000} />
-            <span className="hud__dot" />
-          </p>
-          <h1 id="hero-title" className="hud__t hud--tc mono hero__title">
-            Clothing for the after-hours city. Heavy, quiet, black. Cut in Prague for the ones who stay out.
-          </h1>
-          <p className="hud__t hud--tr mono">
-            Drop 07
-            <br />
-            Curfew
-          </p>
-          <p className="hud__t hud--ml mono">
-            <Scramble text={['Machine & human\nTRK 0.92', 'Subject in frame\nTRK 0.88', 'Under the bridge\nTRK 0.95']} every={4200} />
-          </p>
+          <p className="hud__t hud--tl mono"><Type>{'The city\nnever sleeps'}</Type><span className="hud__dot" /></p>
+          <AroundMark as="h1" className="hud__t hud--tc mono hud__center" text="Clothing for the after-hours city. Heavy, quiet, black. Cut in Prague for the ones who stay out." />
+          <p className="hud__t hud--tr mono"><Type delay={200}>{'Drop 07\nCurfew'}</Type></p>
+          <p className="hud__t hud--ml mono"><Type delay={400}>{'Machine & human\nTRK 0.92'}</Type></p>
           <p className="hud__pill mono">(C) 2026</p>
-          <p className="hud__t hud--mr mono">
-            Heavy cloth
-            <br />
-            480 to 620 gsm
-          </p>
-          <Link to="/shop" className="hud__t hud--bl mono hero__cta">
-            Shop new arrivals
-          </Link>
-          <p className="hud__t hud--bc mono">
-            <Clock /> / 50.0755 N 14.4378 E
-          </p>
-          <p className="hud__t hud--br mono">
-            Scroll
-            <br />
-            for more
-          </p>
+          <p className="hud__t hud--mr mono"><Type delay={500}>{'Heavy cloth\n480 to 620 gsm'}</Type></p>
+          <Link to="/shop?new=1" className="hud--bl hud__cta">Shop new arrivals</Link>
+          <p className="hud__t hud--bc mono hud__big"><Clock /> / 50.0755 N 14.4378 E</p>
+          <p className="hud--br hud__big mono">Scroll<br />for more</p>
         </div>
       </section>
 
       <nav className="cats" aria-label="Categories" data-theme="light">
         <div className="cats__row">
-          <Link to="/shop" className="cats__link is-on">New arrivals</Link>
+          <Link to="/shop?new=1" className="cats__link is-on">New arrivals</Link>
           {CATEGORIES.map((c) => (
-            <Link key={c.id} to={`/shop?c=${c.id}`} className="cats__link">
-              {c.label}
-            </Link>
+            <Link key={c.id} to={`/shop?c=${c.id}`} className="cats__link">{c.label}</Link>
           ))}
         </div>
       </nav>
@@ -85,22 +61,26 @@ export default function Home() {
         </div>
       </section>
 
-      <section ref={mirror} className="mirror reveal" data-theme="dark" aria-labelledby="mirror-title">
-        <div className="mirror__img">
-          <img src={assetUrl('video/still.jpg')} alt="" width={1280} height={720} loading="lazy" decoding="async" />
-          <img src={assetUrl('video/still.jpg')} alt="" width={1280} height={720} loading="lazy" decoding="async" className="mirror__flip" />
+      <section ref={band} className="band reveal" data-theme="dark" aria-labelledby="band-title">
+        <div className="band__img">
+          <Img src="look/skate" alt="A person in a pale cropped top and wide trousers standing alone in a dark, empty building" sizes="100vw" />
+          <div className="band__noise" aria-hidden="true" />
         </div>
         <HudGrid />
         <div className="hud">
-          <p className="hud__t hud--tl mono">The future<br />is coming<span className="hud__dot" /></p>
-          <h2 id="mirror-title" className="hud__t hud--tc mono">In the grey of the city we wear the night as a uniform. Cut close, built heavy, made to outlast the trend.</h2>
-          <p className="hud__t hud--tr mono">Delicate lines<br />wool / nylon</p>
-          <p className="hud__t hud--ml mono">Machine & human<br />AI 0.98</p>
+          <p className="hud__t hud--tl mono"><Type>{'The future\nis coming'}</Type><span className="hud__dot" /></p>
+          <AroundMark as="h2" className="hud__t hud--tc mono hud__center" text="In the grey of the city we wear the night as a uniform. Cut close, built heavy, made to outlast the trend." />
+          <p className="hud__t hud--tr mono"><Type delay={200}>{'Delicate lines\nwool / nylon'}</Type></p>
+          <p className="hud__t hud--ml mono"><Type delay={350}>{'Machine & human\nAI 0.98'}</Type></p>
           <p className="hud__pill mono">VAULTX</p>
-          <p className="hud__t hud--mr mono">Controlled<br />curves</p>
-          <Link to="/lookbook" className="hud__t hud--bl mono hero__cta">Open the lookbook</Link>
-          <p className="hud__t hud--bc mono">Bold strokes / soft light</p>
-          <p className="hud__t hud--br mono">Prague<br />2026</p>
+          <p className="hud__t hud--mr mono"><Type delay={450}>{'Controlled\ncurves'}</Type></p>
+          <Link to="/about" className="hud--bl hud__cta">About us</Link>
+          <p className="hud__t hud--bc mono hud__big">Bold strokes / soft light</p>
+          <p className="hud--br hud__big mono">
+            Photo
+            <br />
+            <a href="https://unsplash.com/photos/VqsB87zWJcg" target="_blank" rel="noopener noreferrer">Alex Gruber</a>
+          </p>
         </div>
       </section>
 
@@ -109,20 +89,18 @@ export default function Home() {
           <h2 id="outer-title" className="block__title">Outerwear</h2>
           <Link to="/shop?c=outerwear" className="block__link">View outerwear</Link>
         </div>
-        <div className="grid">
-          {outer.map((p) => <ProductCard key={p.slug} product={p} />)}
-        </div>
+        <div className="grid">{outer.map((p) => <ProductCard key={p.slug} product={p} />)}</div>
       </section>
 
       <section className="community" data-theme="light" aria-labelledby="comm-title">
         <h2 id="comm-title" className="community__title">Let us make it together</h2>
         <ul className="community__list">
-          <li>for creators</li>
-          <li>for artists</li>
-          <li>for designers</li>
-          <li>for outsiders</li>
+          <li><Link to="/collab/creators">for creators</Link></li>
+          <li><Link to="/collab/artists">for artists</Link></li>
+          <li><Link to="/collab/designers">for designers</Link></li>
+          <li><Link to="/collab/outsiders">for outsiders</Link></li>
         </ul>
-        <p className="community__text">Wear it, shoot it, send it to the studio. The best frames end up in the lookbook.</p>
+        <p className="community__text">Shoot it, paint on it, redesign it. Pick your group and tell us what you want to make.</p>
       </section>
 
       <section className="promises" data-theme="light" aria-label="Delivery and returns">

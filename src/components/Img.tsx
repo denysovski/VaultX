@@ -3,7 +3,7 @@ import images from '../data/images.json';
 import { assetUrl } from '../lib/format';
 import fit from '../data/fit.json';
 
-const FIT = fit as Record<string, { s: number; x: number; y: number; b: number }>;
+const FIT = fit as Record<string, { s: number; x: number; y: number; b: number; clip?: string }>;
 
 type Entry = { w: number; h: number; sizes: number[] };
 const MANIFEST = images as Record<string, Entry>;
@@ -57,7 +57,7 @@ export function ProductImg({ src, alt, priority, className = '' }: { src: string
     if (ref.current?.complete && ref.current.naturalWidth) setLoaded(true);
   }, [src]);
   const f = FIT[src.split('/736x/')[1] ?? ''];
-  const style = f ? ({ '--fit': `translate(${f.x}%, ${f.y}%) scale(${f.s})`, '--lift': f.b } as React.CSSProperties) : undefined;
+  const style = f ? ({ '--fit': `translate(${f.x}%, ${f.y}%) scale(${f.s})`, '--lift': f.b, clipPath: f.clip } as React.CSSProperties) : undefined;
   return (
     <img
       ref={ref}

@@ -45,7 +45,7 @@ function Terms() {
       <p>Prices are in euro and include VAT. Shipping is shown before you pay. Card payments are taken when the order is placed; bank transfers must arrive within 3 days.</p>
       <h2>Delivery</h2>
       <p>Orders leave Prague within one working day. Delivery windows on the product and checkout pages are estimates from the courier. Duties outside the EU are paid by the recipient.</p>
-      <h2>Returns and refunds</h2>
+      <h2 id="returns">Returns and refunds</h2>
       <p>You can return unworn pieces within 30 days of delivery, as described on the <Link to="/help#returns" className="text-link">help desk</Link>. EU customers keep their statutory 14-day right of withdrawal on top of this.</p>
       <h2>Warranty</h2>
       <p>Every piece carries the statutory 24-month warranty against manufacturing defects. Normal wear, fading of garment-dyed colours and damage from ignoring the care label are not defects.</p>
