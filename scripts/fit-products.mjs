@@ -39,7 +39,7 @@ for (const file of fs.readdirSync(DIR)) {
     x: +((-offX * s) / FRAME * 100).toFixed(2),
     y: +(-offY * s * 100).toFixed(2),
     b: +Math.min(1.35, Math.max(1, 250 / Math.max(bg, 1))).toFixed(3),
-    ...(prev[key]?.clip ? { clip: prev[key].clip } : {}), // hand-set crops survive a re-run
+    ...(prev[key]?.crop ? { crop: prev[key].crop } : {}), // hand-set crops survive a re-run
   };
 }
 fs.writeFileSync('src/data/fit.json', JSON.stringify(out, null, 2));

@@ -3,7 +3,7 @@ import images from '../data/images.json';
 import { assetUrl } from '../lib/format';
 import fit from '../data/fit.json';
 
-const FIT = fit as Record<string, { s: number; x: number; y: number; b: number; clip?: string }>;
+const FIT = fit as Record<string, { s: number; x: number; y: number; b: number; crop?: number }>;
 
 type Entry = { w: number; h: number; sizes: number[] };
 const MANIFEST = images as Record<string, Entry>;
@@ -56,8 +56,27 @@ export function ProductImg({ src, alt, priority, className = '' }: { src: string
   useEffect(() => {
     if (ref.current?.complete && ref.current.naturalWidth) setLoaded(true);
   }, [src]);
-  const f = FIT[src.split('/736x/')[1] ?? ''];
-  const style = f ? ({ '--fit': `translate(${f.x}%, ${f.y}%) scale(${f.s})`, '--lift': f.b, clipPath: f.clip } as React.CSSProperties) : undefined;
+  const f = FIT[src.split('/736x/')[1] ?? ''] as { s: number; x: number; y: number; b: number; crop?: number } | undefined;
+  // crop: share of the photo's right edge to hide (some photos carry a 1px dark border).
+  // The picture is letterboxed inside the <img> box (object-fit: contain), so the
+  // inset is measured from where the picture actually ends, and updated on resize.
+  const [clip, setClip] = useState<string>();
+  useEffect(() => {
+    const el = ref.current;
+    if (!f?.crop || !el) return;
+    const measure = () => {
+      if (!el.naturalWidth) return;
+      const w = el.clientWidth, h = el.clientHeight;
+      const shown = Math.min(w, (h * el.naturalWidth) / el.naturalHeight);
+      setClip(`inset(0 ${((w - shown) / 2 + shown * f.crop!).toFixed(1)}px 0 0)`);
+    };
+    measure();
+    el.addEventListener('load', measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => { ro.disconnect(); el.removeEventListener('load', measure); };
+  }, [src, f?.crop]);
+  const style = f ? ({ '--fit': `translate(${f.x}%, ${f.y}%) scale(${f.s})`, '--lift': f.b, clipPath: clip } as React.CSSProperties) : undefined;
   return (
     <img
       ref={ref}

@@ -167,14 +167,22 @@ function AuthForms() {
         </ul>
       </aside>
       <div className="auth stagger">
-        <h1 className="auth__title">{mode === 'in' ? 'Sign in' : 'Create account'}</h1>
+        <h1 className="auth__title" aria-live="polite">
+          {/* both titles share one cell; the box keeps its height and the words cross-fade */}
+          <span className={`auth__word${mode === 'in' ? ' is-on' : ''}`} aria-hidden={mode !== 'in'}>Sign in</span>
+          <span className={`auth__word${mode === 'up' ? ' is-on' : ''}`} aria-hidden={mode !== 'up'}>Create account</span>
+        </h1>
         <div className="auth__tabs" role="tablist" aria-label="Account">
           <button role="tab" aria-selected={mode === 'in'} className={`tab${mode === 'in' ? ' is-on' : ''}`} onClick={tab('in')}>Sign in</button>
           <button role="tab" aria-selected={mode === 'up'} className={`tab${mode === 'up' ? ' is-on' : ''}`} onClick={tab('up')}>Create account</button>
         </div>
         {ended && mode === 'in' && <p className="note" role="status">You were signed out. Sign in again; your bag is still here.</p>}
-        <form key={mode} onSubmit={submit} noValidate className="auth__form">
-          {mode === 'up' && <Field id="auth-name" label="Full name" autoComplete="name" required maxLength={80} value={name} onChange={(x) => setName(v.clean(x, 80))} onBlur={() => setTouched((t) => ({ ...t, name: true }))} error={err('name')} />}
+        <form onSubmit={submit} noValidate className={`auth__form auth__form--${mode}`}>
+          <div className="auth__name" inert={mode !== 'up'}>
+            <div>
+              <Field id="auth-name" label="Full name" autoComplete="name" required={mode === 'up'} maxLength={80} value={name} onChange={(x) => setName(v.clean(x, 80))} onBlur={() => setTouched((t) => ({ ...t, name: true }))} error={mode === 'up' ? err('name') : undefined} />
+            </div>
+          </div>
           <Field id="auth-mail" label="Email" type="email" inputMode="email" autoComplete="email" required maxLength={254} value={mail} onChange={(x) => setMail(v.clean(x, 254))} onBlur={() => setTouched((t) => ({ ...t, mail: true }))} error={err('mail')} />
           <Field
             id="auth-pass"
