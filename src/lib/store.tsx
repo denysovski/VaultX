@@ -97,6 +97,31 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
+  // Keep the session alive while the visitor is active; end it after 2 h idle.
+  useEffect(() => {
+    if (!user) return;
+    let last = 0;
+    const touch = () => {
+      if (Date.now() - last < 30_000) return;
+      last = Date.now();
+      currentUser();
+    };
+    const check = setInterval(() => {
+      if (!currentUser()) {
+        setUser(null);
+        toast('Signed out after 2 hours without activity');
+      }
+    }, 60_000);
+    window.addEventListener('pointerdown', touch);
+    window.addEventListener('keydown', touch);
+    return () => {
+      clearInterval(check);
+      window.removeEventListener('pointerdown', touch);
+      window.removeEventListener('keydown', touch);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   useEffect(() => {
     if (ready) write('bag', bag);
   }, [bag, ready]);

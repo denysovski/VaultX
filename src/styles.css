@@ -518,11 +518,8 @@ legend { padding: 0; }
 .tab { background: none; border: 0; padding: 4px 0; min-height: 32px; font-size: var(--t-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 .tab.is-on { color: var(--fg); text-decoration: underline; text-underline-offset: 5px; }
 .auth__form { display: grid; gap: var(--s3); }
-.gbtn { display: grid; gap: var(--s2); min-height: 44px; }
-.gbtn__slot { min-height: 44px; }
-.gbtn__skel { height: 44px; margin-top: -48px; }
-.or { display: flex; align-items: center; gap: var(--s3); color: var(--muted); font-size: var(--t-hud); }
-.or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.pw-form { margin-bottom: var(--s5); }
+.pw-toggle { display: block; margin-bottom: var(--s5); }
 @media (max-width: 899px) { .order__grid, .account__grid { grid-template-columns: 1fr; } .orders__row { grid-template-columns: 1fr auto; } }
 .help__head { display: grid; gap: var(--s3); margin-bottom: var(--s5); }
 .help__head .page-title { margin: 0; }
