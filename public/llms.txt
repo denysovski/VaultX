@@ -1,12 +1,12 @@
 # VAULTX
 
-> VAULTX is a concept streetwear store from Prague: heavyweight hoodies, tees, outerwear, denim and caps in black, grey and bone, with a few loud colourways. It is a portfolio project; no real orders or payments are processed.
+> VAULTX is a concept streetwear store from Prague: black hoodies, knitwear, leather outerwear, tees, headwear and belts, shown in black and white. It is a portfolio project; no real orders or payments are processed.
 
 ## Key pages
 
 - [Home](https://denysovski.github.io/VaultX/): Drop 07 Curfew, the brand story and delivery promises
-- [Shop](https://denysovski.github.io/VaultX/shop/): all products with filters for category, colour, size, price and stock
-- [Bunker Hoodie](https://denysovski.github.io/VaultX/shop/bunker-hoodie/): 520 gsm hoodie, three colours
+- [Shop](https://denysovski.github.io/VaultX/shop/): all products with filters for category, size, price and stock
+- [Breach Leather Jacket](https://denysovski.github.io/VaultX/shop/breach-leather-jacket/): washed lambskin, hooded
 - [Lookbook](https://denysovski.github.io/VaultX/lookbook/): photos by Christian Agbede on Unsplash
 - [Help desk](https://denysovski.github.io/VaultX/help/): order tracking, delivery problems, returns, FAQ and contact
 - [Terms](https://denysovski.github.io/VaultX/terms/) and [Privacy](https://denysovski.github.io/VaultX/privacy/)

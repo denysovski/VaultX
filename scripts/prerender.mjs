@@ -19,7 +19,7 @@ const routes = ['/', '/shop', ...PRODUCTS.map((p) => `/shop/${p.slug}`), '/lookb
 
 function head(m) {
   const url = canonical(m.path);
-  const image = `${SITE_URL}${m.image ?? '/og.jpg'}`;
+  const image = m.ogImage ?? `${SITE_URL}${m.image ?? '/og.jpg'}`;
   return [
     `<title>${esc(m.title)}</title>`,
     `<meta name="description" content="${esc(m.description)}" />`,
@@ -32,6 +32,7 @@ function head(m) {
     `<meta property="og:url" content="${url}" />`,
     `<meta property="og:image" content="${image}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
+    ...(m.path === '/' ? [`<link rel="preload" as="image" href="${BASE}/video/hero-poster.jpg" fetchpriority="high" />`] : []),
     ...(m.lcp && images[m.lcp.src]
       ? [`<link rel="preload" as="image" type="image/avif" fetchpriority="high" imagesrcset="${images[m.lcp.src].sizes.map((w) => `${BASE}/img/${m.lcp.src}-${w}.avif ${w}w`).join(', ')}" imagesizes="${m.lcp.sizes}" />`]
       : []),

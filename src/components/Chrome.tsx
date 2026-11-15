@@ -12,11 +12,11 @@ export function Footer() {
         <p className="footer__lead">VAULTX</p>
         <nav aria-label="Shop links" className="footer__col">
           <p className="footer__h">Shop</p>
-          <Link to="/shop">All pieces</Link>
+          <Link to="/shop">New arrivals</Link>
           <Link to="/shop?c=hoodies">Hoodies</Link>
-          <Link to="/shop?c=tees">Tees</Link>
+          <Link to="/shop?c=knitwear">Knitwear</Link>
           <Link to="/shop?c=outerwear">Outerwear</Link>
-          <Link to="/shop?c=denim">Denim</Link>
+          <Link to="/shop?c=belts">Belts</Link>
         </nav>
         <nav aria-label="Help links" className="footer__col">
           <p className="footer__h">Help</p>
@@ -34,7 +34,7 @@ export function Footer() {
         </nav>
       </div>
       <div className="footer__base mono">
-        <p>© {new Date().getFullYear()} VAULTX. Concept store: no real payments are taken.</p>
+        <p>© {new Date().getFullYear()} VAULTX / Prague. Concept store, no real payments.</p>
         <p>
           Photography by{' '}
           <a href={PHOTOGRAPHER.url} target="_blank" rel="noopener noreferrer">
@@ -120,7 +120,7 @@ export function Seo() {
     const m = getMeta(pathname);
     document.title = m.title;
     const url = canonical(m.path);
-    const image = `${SITE_URL}${m.image ?? '/og.jpg'}`;
+    const image = m.ogImage ?? `${SITE_URL}${m.image ?? '/og.jpg'}`;
     const meta = (key: string, val: string, prop = false) =>
       setTag(`meta[${prop ? 'property' : 'name'}="${key}"]`, 'content', val, () => {
         const e = document.createElement('meta');

@@ -1,32 +1,25 @@
 import { Link } from 'react-router';
-import type { Product, Colourway } from '../data/products';
+import type { Product } from '../data/products';
 import { totalStock } from '../data/products';
 import { money } from '../lib/format';
-import { Img } from './Img';
+import { ProductImg } from './Img';
 
-interface Props {
-  product: Product;
-  colour?: Colourway;
-  priority?: boolean;
-  sizes?: string;
-}
-
-export function ProductCard({ product: p, colour, priority, sizes = '(min-width: 1100px) 25vw, (min-width: 640px) 33vw, 50vw' }: Props) {
-  const c = colour ?? p.colours[0];
-  const left = totalStock(c);
+export function ProductCard({ product: p, priority }: { product: Product; priority?: boolean }) {
+  const left = totalStock(p);
   return (
     <article className="card">
-      <Link to={`/shop/${p.slug}${colour ? `?colour=${c.id}` : ''}`} className="card__link">
-        <div className="card__stage">
-          <Img src={`garment/${c.image}`} alt={`${p.name} in ${c.name}`} sizes={sizes} priority={priority} className="card__img" />
-          {left === 0 ? <span className="card__flag mono">Sold out</span> : left < 8 ? <span className="card__flag mono">Last {left}</span> : null}
+      <Link to={`/shop/${p.slug}`} className="card__link">
+        <div className="card__frame">
+          <ProductImg src={p.image} alt={p.name} priority={priority} />
+          <span className="card__code mono" aria-hidden="true">{p.code}</span>
+          {left === 0 ? <span className="card__flag mono">Sold out</span> : left < 6 ? <span className="card__flag mono">Low stock</span> : p.isNew ? <span className="card__flag mono">New</span> : null}
+          <span className="card__track" aria-hidden="true">
+            <span className="mono">{p.spec}</span>
+          </span>
         </div>
         <div className="card__meta">
           <h3 className="card__name">{p.name}</h3>
-          <p className="card__price mono tnum">{money(p.price)}</p>
-          <p className="card__sub mono">
-            {colour ? c.name : p.colours.length > 1 ? `${p.colours.length} colours` : c.name}
-          </p>
+          <p className="card__price tnum">{money(p.price)}</p>
         </div>
       </Link>
     </article>

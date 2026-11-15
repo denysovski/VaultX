@@ -1,5 +1,9 @@
+import { useEffect, useRef, useState } from 'react';
 import images from '../data/images.json';
 import { assetUrl } from '../lib/format';
+import fit from '../data/fit.json';
+
+const FIT = fit as Record<string, { s: number; x: number; y: number; b: number }>;
 
 type Entry = { w: number; h: number; sizes: number[] };
 const MANIFEST = images as Record<string, Entry>;
@@ -37,5 +41,38 @@ export function Img({ src, alt, sizes, className, priority }: Props) {
         fetchPriority={priority ? 'high' : 'auto'}
       />
     </picture>
+  );
+}
+
+/**
+ * Product photo hotlinked from Pinterest. Shown in a fixed 4:5 frame
+ * (object-fit: contain), greyscale and multiplied onto the card colour, so
+ * images with white, grey or transparent backgrounds all sit the same way.
+ * Fades in from a blur once decoded.
+ */
+export function ProductImg({ src, alt, priority, className = '' }: { src: string; alt: string; priority?: boolean; className?: string }) {
+  const ref = useRef<HTMLImageElement>(null);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    if (ref.current?.complete && ref.current.naturalWidth) setLoaded(true);
+  }, [src]);
+  const f = FIT[src.split('/736x/')[1] ?? ''];
+  const style = f ? ({ '--fit': `translate(${f.x}%, ${f.y}%) scale(${f.s})`, '--lift': f.b } as React.CSSProperties) : undefined;
+  return (
+    <img
+      ref={ref}
+      style={style}
+      src={src}
+      alt={alt}
+      width={736}
+      height={920}
+      loading={priority ? 'eager' : 'lazy'}
+      decoding="async"
+      fetchPriority={priority ? 'high' : 'auto'}
+      referrerPolicy="no-referrer"
+      className={`pimg${loaded ? ' is-loaded' : ''} ${className}`}
+      onLoad={() => setLoaded(true)}
+      onError={() => setLoaded(true)}
+    />
   );
 }

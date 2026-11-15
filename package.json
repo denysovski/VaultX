@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist-ssr && node scripts/prerender.mjs && touch dist/.nojekyll",
     "preview": "vite preview",
     "lint": "oxlint src",
-    "images": "node scripts/optimize-images.mjs"
+    "images": "node scripts/optimize-images.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "react": "^19.3.1",
@@ -23,7 +24,8 @@
     "oxlint": "^1.90.0",
     "sharp": "^0.35.5",
     "typescript": "~7.0.2",
-    "vite": "^8.3.6"
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
   },
   "description": "VAULTX: dystopian streetwear store. React + TypeScript single-page app with prerendered routes."
 }

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useStore, orderStatus } from '../lib/store';
-import { login, register, sessionExpired } from '../lib/auth';
+import { login, register, sessionExpired, googleSignIn } from '../lib/auth';
+import { googleEnabled, loadGsi, initGoogle, verifyIdToken } from '../lib/google';
 import * as v from '../lib/validate';
 import { money } from '../lib/format';
 import { Field, Button } from '../components/Field';
@@ -15,15 +16,12 @@ export default function Account() {
   const mine = orders.filter((o) => o.userId === user.id || o.email === user.email);
   return (
     <div className="account" data-theme="light">
-      <h1 className="page-title">{user.name}</h1>
+      <h1 className="page-title">Account</h1>
       <div className="account__grid">
-        <section aria-labelledby="ord">
-          <h2 id="ord" className="section-title">Orders</h2>
+        <section aria-labelledby="ord" className="stagger">
+          <h2 id="ord" className="mono">Orders</h2>
           {mine.length === 0 ? (
-            <div className="empty empty--inline">
-              <p>No orders yet.</p>
-              <Link to="/shop" className="text-link">Browse Drop 07</Link>
-            </div>
+            <p className="muted">No orders yet. <Link to="/shop" className="text-link">Shop new arrivals</Link></p>
           ) : (
             <ul className="orders">
               {mine.map((o) => {
@@ -34,7 +32,7 @@ export default function Account() {
                       <span className="mono">{o.id}</span>
                       <span>{new Date(o.createdAt).toLocaleDateString('en-GB')}</span>
                       <span>{s.steps[s.current].label}</span>
-                      <span className="mono tnum">{money(o.total)}</span>
+                      <span className="tnum">{money(o.total)}</span>
                     </Link>
                   </li>
                 );
@@ -42,15 +40,76 @@ export default function Account() {
             </ul>
           )}
         </section>
-        <section aria-labelledby="det">
-          <h2 id="det" className="section-title">Details</h2>
+        <section aria-labelledby="det" className="stagger">
+          <h2 id="det" className="mono">Details</h2>
           <dl className="kv">
             <div><dt className="mono">Name</dt><dd>{user.name}</dd></div>
             <div><dt className="mono">Email</dt><dd>{user.email}</dd></div>
+            <div><dt className="mono">Sign-in</dt><dd>{user.methods.map((m) => (m === 'google' ? 'Google' : 'Password')).join(' and ')}</dd></div>
           </dl>
-          <button className="btn btn--ghost" onClick={logout}><span className="btn__label">Sign out</span></button>
+          <button className="btn btn--ghost" onClick={logout}>Sign out</button>
         </section>
       </div>
+    </div>
+  );
+}
+
+function GoogleButton({ onDone }: { onDone: (name: string) => void }) {
+  const slot = useRef<HTMLDivElement>(null);
+  const [state, setState] = useState<'idle' | 'loading' | 'ready' | 'busy'>('idle');
+  const [err, setErr] = useState('');
+  const { setUser } = useStore();
+
+  useEffect(() => {
+    if (!googleEnabled) return;
+    let alive = true;
+    setState('loading');
+    loadGsi()
+      .then(() => {
+        if (!alive || !slot.current) return;
+        const handle = async (jwt: string) => {
+          setState('busy');
+          setErr('');
+          try {
+            const profile = await verifyIdToken(jwt);
+            const u = googleSignIn(profile);
+            setUser(u);
+            onDone(u.name);
+          } catch (e) {
+            setErr(e instanceof Error ? e.message : 'Google sign-in failed.');
+            setState('ready');
+            initGoogle(handle); // fresh nonce for the next attempt
+          }
+        };
+        initGoogle(handle);
+        window.google!.accounts.id.renderButton(slot.current, { type: 'standard', theme: 'filled_black', size: 'large', shape: 'rectangular', text: 'continue_with', logo_alignment: 'left', width: Math.min(400, slot.current.clientWidth || 320) });
+        setState('ready');
+      })
+      .catch((e) => {
+        if (alive) {
+          setErr(e.message);
+          setState('idle');
+        }
+      });
+    return () => {
+      alive = false;
+    };
+  }, [onDone, setUser]);
+
+  if (!googleEnabled) {
+    return (
+      <div className="gbtn">
+        <button type="button" className="btn btn--ghost btn--wide" disabled aria-describedby="g-off">Continue with Google</button>
+        <p id="g-off" className="small muted">Google sign-in is switched off on this copy of the store.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="gbtn" aria-busy={state === 'loading' || state === 'busy'}>
+      <div ref={slot} className="gbtn__slot" />
+      {state === 'loading' && <div className="skeleton gbtn__skel" />}
+      {state === 'busy' && <p className="small muted" role="status">Verifying with Google</p>}
+      {err && <p className="field__error" role="alert">{err}</p>}
     </div>
   );
 }
@@ -80,6 +139,11 @@ function AuthForms() {
   };
   const err = (k: keyof typeof errs) => (touched[k] || submitted ? errs[k] : '');
 
+  const done = (n: string) => {
+    toast(`Signed in as ${n.split(' ')[0]}`, 'ok');
+    if (next !== '/account') nav(next);
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
@@ -93,8 +157,7 @@ function AuthForms() {
     try {
       const u = mode === 'up' ? await register(name, mail, pass) : await login(mail, pass);
       setUser(u);
-      toast(mode === 'up' ? 'Account created. Welcome to the vault.' : `Signed in as ${u.name.split(' ')[0]}`, 'ok');
-      if (next !== '/account') nav(next);
+      done(u.name);
     } catch (x) {
       setFormErr(x instanceof Error ? x.message : 'Something went wrong. Try again.');
     } finally {
@@ -102,18 +165,18 @@ function AuthForms() {
     }
   };
 
-  const strength = pass.length === 0 ? 0 : Math.min(4, [pass.length >= 10, /\d/.test(pass), /[A-Z]/.test(pass) && /[a-z]/.test(pass), /[^A-Za-z0-9]/.test(pass) || pass.length >= 16].filter(Boolean).length);
-
   return (
     <div className="account account--auth" data-theme="light">
       <h1 className="page-title">Account</h1>
-      <div className="auth">
+      <div className="auth stagger">
         <div className="auth__tabs" role="tablist" aria-label="Account">
-          <button role="tab" aria-selected={mode === 'in'} className={`toggle${mode === 'in' ? ' is-on' : ''}`} onClick={() => { setMode('in'); setFormErr(''); setSubmitted(false); }}>Sign in</button>
-          <button role="tab" aria-selected={mode === 'up'} className={`toggle${mode === 'up' ? ' is-on' : ''}`} onClick={() => { setMode('up'); setFormErr(''); setSubmitted(false); }}>Create account</button>
+          <button role="tab" aria-selected={mode === 'in'} className={`tab${mode === 'in' ? ' is-on' : ''}`} onClick={() => { setMode('in'); setFormErr(''); setSubmitted(false); }}>Sign in</button>
+          <button role="tab" aria-selected={mode === 'up'} className={`tab${mode === 'up' ? ' is-on' : ''}`} onClick={() => { setMode('up'); setFormErr(''); setSubmitted(false); }}>Create account</button>
         </div>
-        {expired && mode === 'in' && <p className="note" role="status">Your session ended after 7 days. Sign in again; your bag is still here.</p>}
-        <form onSubmit={submit} noValidate className="auth__form">
+        {expired && mode === 'in' && <p className="note" role="status">Your session ended. Sign in again; your bag is still here.</p>}
+        <GoogleButton onDone={done} />
+        <p className="or mono" aria-hidden="true"><span>or with email</span></p>
+        <form key={mode} onSubmit={submit} noValidate className="auth__form stagger">
           {mode === 'up' && <Field id="auth-name" label="Full name" autoComplete="name" required maxLength={80} value={name} onChange={(x) => setName(v.clean(x, 80))} onBlur={() => setTouched((t) => ({ ...t, name: true }))} error={err('name')} />}
           <Field id="auth-mail" label="Email" type="email" inputMode="email" autoComplete="email" required maxLength={254} value={mail} onChange={(x) => setMail(v.clean(x, 254))} onBlur={() => setTouched((t) => ({ ...t, mail: true }))} error={err('mail')} />
           <Field
@@ -127,14 +190,9 @@ function AuthForms() {
             onChange={setPass}
             onBlur={() => setTouched((t) => ({ ...t, pass: true }))}
             error={err('pass')}
-            hint={mode === 'up' ? 'At least 10 characters with letters and a number.' : undefined}
+            hint={mode === 'up' ? 'At least 10 characters, letters and a number.' : undefined}
             adornment={<button type="button" className="link-btn" onClick={() => setShow((s) => !s)} aria-pressed={show}>{show ? 'Hide' : 'Show'}</button>}
           />
-          {mode === 'up' && (
-            <div className="strength" aria-hidden="true">
-              {[0, 1, 2, 3].map((i) => <span key={i} className={i < strength ? 'is-on' : ''} />)}
-            </div>
-          )}
           {formErr && <p className="alert" role="alert">{formErr}</p>}
           <Button type="submit" className="btn--wide" busy={busy}>{mode === 'in' ? 'Sign in' : 'Create account'}</Button>
         </form>

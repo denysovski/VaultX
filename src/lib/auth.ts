@@ -11,11 +11,14 @@ export interface User {
   name: string;
   email: string;
   createdAt: string;
+  /** how this account can sign in */
+  methods: ('password' | 'google')[];
 }
 
 interface StoredUser extends User {
   salt: string;
   hash: string;
+  googleSub?: string;
 }
 
 interface Session {
@@ -44,19 +47,24 @@ function same(a: string, b: string) {
   return r === 0;
 }
 
-const users = () => read<StoredUser[]>('users', []);
-const publicUser = ({ salt: _s, hash: _h, ...u }: StoredUser): User => u;
+const users = () =>
+  read<StoredUser[]>('users', [])
+    .filter((u) => u && typeof u.id === 'string' && typeof u.email === 'string')
+    .map((u) => ({ ...u, methods: u.methods ?? ['password'] }));
+const publicUser = ({ salt: _s, hash: _h, googleSub: _g, ...u }: StoredUser): User => u;
 
 export async function register(name: string, email: string, password: string): Promise<User> {
   const list = users();
   const mail = email.trim().toLowerCase();
   if (list.some((u) => u.email === mail)) throw new Error('An account with this email already exists. Sign in instead.');
+  if (password.length > 128) throw new Error('Password is too long.');
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const user: StoredUser = {
     id: crypto.randomUUID(),
     name: name.trim(),
     email: mail,
     createdAt: new Date().toISOString(),
+    methods: ['password'],
     salt: toHex(salt),
     hash: await hash(password, salt),
   };
@@ -69,8 +77,30 @@ export async function login(email: string, password: string): Promise<User> {
   const mail = email.trim().toLowerCase();
   const user = users().find((u) => u.email === mail);
   // Hash even when the user does not exist, so both paths take the same time.
-  const candidate = await hash(password, user ? fromHex(user.salt) : new Uint8Array(16));
-  if (!user || !same(candidate, user.hash)) throw new Error('Email or password is incorrect.');
+  const hasPassword = !!user && user.methods.includes('password') && !!user.salt;
+  const candidate = await hash(password.slice(0, 128), hasPassword ? fromHex(user!.salt) : new Uint8Array(16));
+  if (!user || !hasPassword || !same(candidate, user.hash)) throw new Error('Email or password is incorrect.');
+  startSession(user.id);
+  return publicUser(user);
+}
+
+/**
+ * Opens or creates the local account for a Google profile that has already
+ * been verified (signature, audience, expiry, nonce: see google.ts).
+ * An existing password account with the same verified email is linked.
+ */
+export function googleSignIn(g: { sub: string; email: string; name: string }): User {
+  const list = users();
+  let user = list.find((u) => u.googleSub === g.sub) ?? list.find((u) => u.email === g.email);
+  if (user) {
+    if (user.googleSub && user.googleSub !== g.sub) throw new Error('This email is linked to a different Google account.');
+    user.googleSub = g.sub;
+    if (!user.methods.includes('google')) user.methods = [...user.methods, 'google'];
+  } else {
+    user = { id: crypto.randomUUID(), name: g.name, email: g.email, createdAt: new Date().toISOString(), methods: ['google'], salt: '', hash: '', googleSub: g.sub };
+    list.push(user);
+  }
+  write('users', list);
   startSession(user.id);
   return publicUser(user);
 }

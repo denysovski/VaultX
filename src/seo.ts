@@ -16,6 +16,8 @@ export interface Meta {
   image?: string;
   /** image key (images.json) of the largest image above the fold, preloaded in the static HTML */
   lcp?: { src: string; sizes: string };
+  /** absolute image URL for social previews */
+  ogImage?: string;
   noindex?: boolean;
   jsonLd?: object[];
 }
@@ -41,8 +43,8 @@ export function getMeta(pathname: string): Meta {
   if (path === '/') {
     return {
       path,
-      title: 'VAULTX: dystopian streetwear for the after-hours city',
-      description: 'Heavyweight hoodies, tees, outerwear and denim from Prague. Drop 07 Curfew is live: free EU shipping over €200, 30-day returns.',
+      title: 'VAULTX: dystopian streetwear from Prague',
+      description: 'Heavy black hoodies, knitwear, leather outerwear, tees, caps and belts. Drop 07 Curfew: tracked shipping, free over €200, 30-day returns.',
       jsonLd: [
         org,
         { '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: `${SITE_URL}/`, potentialAction: { '@type': 'SearchAction', target: `${SITE_URL}/shop/?q={query}`, 'query-input': 'required name=query' } },
@@ -53,9 +55,8 @@ export function getMeta(pathname: string): Meta {
   if (path === '/shop') {
     return {
       path,
-      title: 'Shop Drop 07 Curfew | VAULTX',
-      lcp: { src: 'garment/hoodie-black', sizes: '(min-width: 1100px) 25vw, (min-width: 640px) 33vw, 50vw' },
-      description: `All ${PRODUCTS.length} pieces from Drop 07: ${CATEGORIES.map((c) => c.label.toLowerCase()).join(', ')}. Filter by size, colour and price.`,
+      title: 'New arrivals | VAULTX',
+      description: `All ${PRODUCTS.length} pieces from Drop 07: ${CATEGORIES.map((c) => c.label.toLowerCase()).join(', ')}. Filter by size, price and stock.`,
       jsonLd: [
         {
           '@context': 'https://schema.org',
@@ -71,13 +72,12 @@ export function getMeta(pathname: string): Meta {
   if (m) {
     const p = getProduct(m[1]);
     if (p) {
-      const inStock = p.colours.some((c) => Object.values(c.stock).some((n) => n > 0));
+      const inStock = Object.values(p.stock).some((n) => n > 0);
       return {
         path,
-        title: `${p.name}, ${p.colours.length > 1 ? `${p.colours.length} colours` : p.colours[0].name} | VAULTX`,
-        description: `${p.line}. €${p.price}. ${p.description.split('. ')[0]}.`.slice(0, 158),
-        image: `/img/garment/${p.colours[0].image}-900.webp`,
-        lcp: { src: `garment/${p.colours[0].image}`, sizes: '(min-width: 900px) 55vw, 100vw' },
+        title: `${p.name} | VAULTX`,
+        description: `${p.name}: ${p.spec}. €${p.price}. ${p.description}`.slice(0, 158),
+        ogImage: p.image,
         jsonLd: [
           {
             '@context': 'https://schema.org',
@@ -86,7 +86,7 @@ export function getMeta(pathname: string): Meta {
             sku: p.code,
             description: p.description,
             brand: { '@type': 'Brand', name: SITE_NAME },
-            image: p.colours.map((c) => `${SITE_URL}/img/garment/${c.image}-900.webp`),
+            image: [p.image],
             offers: {
               '@type': 'Offer',
               price: p.price,

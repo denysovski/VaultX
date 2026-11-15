@@ -1,149 +1,99 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router';
-import { getProduct, PRODUCTS, SHIPPING_METHODS, FREE_SHIPPING_FROM } from '../data/products';
-import { getLook, PHOTOGRAPHER } from '../data/looks';
+import { Link, useParams } from 'react-router';
+import { getProduct, PRODUCTS, SHIPPING_METHODS, FREE_SHIPPING_FROM, CATEGORIES } from '../data/products';
 import { useStore } from '../lib/store';
 import { money, deliveryWindow } from '../lib/format';
 import { email as validEmail } from '../lib/validate';
 import { read, write } from '../lib/storage';
-import { Img } from '../components/Img';
+import { ProductImg } from '../components/Img';
 import { ProductCard } from '../components/ProductCard';
 import { Button, Field } from '../components/Field';
 import NotFound from './NotFound';
 
-const CUTOFF_HOUR = 15;
-
 export default function ProductPage() {
   const { slug = '' } = useParams();
   const p = getProduct(slug);
-  const [params, setParams] = useSearchParams();
   const { add, setBagOpen, toast } = useStore();
-  const colourId = params.get('colour');
-  const colour = p?.colours.find((c) => c.id === colourId) ?? p?.colours[0];
-  const [size, setSize] = useState<string>('');
+  const [size, setSize] = useState('');
   const [sizeErr, setSizeErr] = useState('');
   const [busy, setBusy] = useState(false);
-  const [added, setAdded] = useState(false);
+  const [view, setView] = useState<'front' | 'detail'>('front');
   const [guide, setGuide] = useState(false);
-  const [view, setView] = useState<'garment' | string>('garment');
   const buyRef = useRef<HTMLDivElement>(null);
-  const [showBar, setShowBar] = useState(false);
+  const [bar, setBar] = useState(false);
 
   useEffect(() => {
     setSize(p && p.sizes.length === 1 ? p.sizes[0] : '');
     setSizeErr('');
-    setView('garment');
+    setView('front');
   }, [slug, p]);
 
-  // Sticky mobile buy bar appears once the main button scrolls out of view.
   useEffect(() => {
     const el = buyRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => setShowBar(!e.isIntersecting && e.boundingClientRect.top < 0));
+    const io = new IntersectionObserver(([e]) => setBar(!e.isIntersecting && e.boundingClientRect.top < 0));
     io.observe(el);
     return () => io.disconnect();
   }, [slug]);
 
-  if (!p || !colour) return <NotFound />;
+  if (!p) return <NotFound />;
 
-  const stockFor = (s: string) => colour.stock[s] ?? 0;
-  const soldOut = size ? stockFor(size) === 0 : false;
+  const left = size ? p.stock[size] ?? 0 : null;
+  const soldOut = left === 0;
+  const cat = CATEGORIES.find((c) => c.id === p.category)!;
 
   const addToBag = () => {
     if (!size) {
-      setSizeErr('Choose a size first');
+      setSizeErr('Choose a size');
       document.getElementById('size-0')?.focus();
       return;
     }
     if (soldOut) return;
     setBusy(true);
     setTimeout(() => {
-      add({ slug: p.slug, colour: colour.id, size });
+      add({ slug: p.slug, size });
       setBusy(false);
-      setAdded(true);
-      toast(`${p.name}, ${colour.name} / ${size} added to your bag`, 'ok');
-      setTimeout(() => setAdded(false), 1800);
+      toast(`${p.name}, ${size}, added to bag`, 'ok');
       setBagOpen(true);
-    }, 350);
+    }, 320);
   };
 
-  const pickColour = (id: string) => {
-    const next = new URLSearchParams(params);
-    next.set('colour', id);
-    setParams(next, { replace: true, preventScrollReset: true });
-    setView('garment');
-  };
-
-  const related = PRODUCTS.filter((x) => x.slug !== p.slug).slice(0, 4);
-  const looks = p.world.map(getLook);
+  const related = PRODUCTS.filter((x) => x.slug !== p.slug && x.category === p.category).concat(PRODUCTS.filter((x) => x.category !== p.category)).slice(0, 4);
 
   return (
     <div className="product" data-theme="light">
-
       <div className="product__layout">
         <div className="gallery">
-          <div className={`gallery__stage tone-${colour.id === 'black' || colour.id === 'graphite' ? 'fog' : colour.id === 'bone' ? 'graphite' : 'paper'}`}>
-            {view === 'garment' ? (
-              <div key={colour.id} className="gallery__swap">
-                <Img src={`garment/${colour.image}`} alt={`${p.name} in ${colour.name}, front view`} sizes="(min-width: 900px) 55vw, 100vw" priority />
-              </div>
-            ) : (
-              <figure key={view} className="gallery__swap gallery__photo">
-                <Img src={`look/${view}`} alt={getLook(view).alt} sizes="(min-width: 900px) 55vw, 100vw" />
-                <figcaption className="mono">
-                  Mood: {getLook(view).caption}. Photo by{' '}
-                  <a href={getLook(view).unsplash} target="_blank" rel="noopener noreferrer">{PHOTOGRAPHER.name}</a>
-                </figcaption>
-              </figure>
-            )}
-            <p className="gallery__code mono">{p.code}</p>
+          <div className={`gallery__frame gallery__frame--${view}`}>
+            <ProductImg key={view} src={p.image} alt={`${p.name}, ${view === 'front' ? 'front' : 'fabric detail'}`} priority />
+            <span className="track track--a" aria-hidden="true"><span className="mono">FABRIC 0.94</span></span>
+            <span className="track track--b" aria-hidden="true"><span className="mono">{p.code}</span></span>
+            <p className="gallery__spec mono" aria-hidden="true">{p.spec}</p>
           </div>
-          <div className="thumbs" role="group" aria-label="Images">
-            <button className={`thumb${view === 'garment' ? ' is-on' : ''}`} onClick={() => setView('garment')} aria-pressed={view === 'garment'} aria-label={`${p.name} product image`}>
-              <Img src={`garment/${colour.image}`} alt="" sizes="96px" />
-            </button>
-            {looks.map((l) => (
-              <button key={l.key} className={`thumb${view === l.key ? ' is-on' : ''}`} onClick={() => setView(l.key)} aria-pressed={view === l.key} aria-label={`Mood photo: ${l.caption}`}>
-                <Img src={`look/${l.key}`} alt="" sizes="96px" />
-              </button>
-            ))}
+          <div className="thumbs" role="group" aria-label="Views">
+            <button className={`thumb${view === 'front' ? ' is-on' : ''}`} aria-pressed={view === 'front'} onClick={() => setView('front')}>Front</button>
+            <button className={`thumb${view === 'detail' ? ' is-on' : ''}`} aria-pressed={view === 'detail'} onClick={() => setView('detail')}>Detail</button>
           </div>
         </div>
 
         <div className="buy">
-          <p className="mono muted">{p.code}{p.isNew ? ' / New in Drop 07' : ''}</p>
+          <p className="crumbs mono"><Link to="/shop">Shop</Link> / <Link to={`/shop?c=${p.category}`}>{cat.label}</Link></p>
           <h1 className="buy__title">{p.name}</h1>
-          <p className="buy__price mono tnum">{money(p.price)}</p>
-          <p className="buy__line">{p.line}</p>
+          <p className="buy__price tnum">{money(p.price)}</p>
+          <p className="buy__spec mono">{p.spec}</p>
 
-          <fieldset className="swatches">
-            <legend className="mono">
-              Colour: <span className="ink">{colour.name}</span>
-            </legend>
-            <div className="swatches__row">
-              {p.colours.map((c) => (
-                <label key={c.id} className={`swatch${c.id === colour.id ? ' is-on' : ''}`} title={c.name}>
-                  <input type="radio" name="colour" value={c.id} checked={c.id === colour.id} onChange={() => pickColour(c.id)} />
-                  <span className="swatch__dot" style={{ background: c.hex }} aria-hidden="true" />
-                  <span className="sr-only">{c.name}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
-          <fieldset className={`sizes${sizeErr ? ' field--error' : ''}`} aria-describedby={sizeErr ? 'size-err' : undefined}>
+          <fieldset className={`sizes${sizeErr ? ' field--error' : ''}`}>
             <legend className="sizes__legend">
-              <span className="mono">Size{size ? `: ${size}` : ''}</span>
+              <span>Size{size ? `: ${size}` : ''}</span>
               <button type="button" className="link-btn" onClick={() => setGuide(true)}>Size guide</button>
             </legend>
             <div className="sizes__row">
               {p.sizes.map((s, i) => {
-                const n = stockFor(s);
+                const n = p.stock[s] ?? 0;
                 return (
                   <label key={s} className={`size${size === s ? ' is-on' : ''}${n === 0 ? ' is-out' : ''}`}>
                     <input id={`size-${i}`} type="radio" name="size" value={s} checked={size === s} onChange={() => { setSize(s); setSizeErr(''); }} />
                     <span>{s}</span>
-                    {n > 0 && n <= 3 && <span className="size__left mono tnum">{n} left</span>}
                     {n === 0 && <span className="sr-only">, sold out</span>}
                   </label>
                 );
@@ -152,17 +102,23 @@ export default function ProductPage() {
             {sizeErr && <p id="size-err" className="field__error" role="alert">{sizeErr}</p>}
           </fieldset>
 
-          <div ref={buyRef} className="buy__cta">
+          <p className="stock mono" aria-live="polite">
+            {left == null ? 'Choose a size to see stock' : left === 0 ? 'Sold out in this size' : left <= 2 ? `Only ${left} left` : 'In stock'}
+          </p>
+
+          <div ref={buyRef}>
             {soldOut ? (
-              <NotifyMe slug={p.slug} colour={colour.id} size={size} />
+              <NotifyMe slug={p.slug} size={size} />
             ) : (
-              <Button className={`btn--wide${added ? ' pulse' : ''}`} busy={busy} onClick={addToBag}>
-                {added ? 'Added to bag' : `Add to bag, ${money(p.price)}`}
-              </Button>
+              <Button className="btn--wide" busy={busy} onClick={addToBag}>Add to bag</Button>
             )}
           </div>
 
-          <DeliveryEta price={p.price} />
+          <ul className="assure">
+            <li>Tracked shipping, standard {deliveryWindow(SHIPPING_METHODS[0].days)}</li>
+            <li>Free standard shipping over {money(FREE_SHIPPING_FROM)}</li>
+            <li>30 days to return</li>
+          </ul>
 
           <div className="accordion">
             <details open>
@@ -170,43 +126,30 @@ export default function ProductPage() {
               <p>{p.description}</p>
             </details>
             <details>
-              <summary>Fabric and fit</summary>
-              <p>{p.fabric}</p>
-              <p>{p.fit}</p>
-            </details>
-            <details>
-              <summary>Delivery and returns</summary>
+              <summary>Shipping and delivery</summary>
               <ul className="plain">
-                {SHIPPING_METHODS.map((m) => (
-                  <li key={m.id}>
-                    {m.label}: {m.detail}, <span className="mono tnum">{money(m.price)}</span>
-                  </li>
-                ))}
+                {SHIPPING_METHODS.map((m) => <li key={m.id}>{m.label}: {m.detail}, <span className="tnum">{money(m.price)}</span></li>)}
               </ul>
-              <p>Standard shipping is free over {money(FREE_SHIPPING_FROM)}. Returns are free within 30 days inside the EU. <Link to="/help#returns" className="text-link">How returns work</Link></p>
-            </details>
-            <details>
-              <summary>Care</summary>
-              <p>{p.care}</p>
+              <p>Late, damaged or missing? <Link to="/help#issue" className="text-link">Report it here</Link>.</p>
             </details>
           </div>
         </div>
       </div>
 
-      <section className="related" aria-labelledby="related-title">
-        <h2 id="related-title" className="page-title">Wear it with</h2>
-        <div className="grid">
-          {related.map((r) => <ProductCard key={r.slug} product={r} />)}
+      <section className="block" aria-labelledby="rel-title">
+        <div className="block__head">
+          <h2 id="rel-title" className="block__title">You may also like</h2>
         </div>
+        <div className="grid">{related.map((r) => <ProductCard key={r.slug} product={r} />)}</div>
       </section>
 
-      <div className={`buybar${showBar ? ' buybar--on' : ''}`} aria-hidden={!showBar} inert={!showBar}>
+      <div className={`buybar${bar ? ' buybar--on' : ''}`} aria-hidden={!bar} inert={!bar}>
         <div>
           <p className="buybar__name">{p.name}</p>
-          <p className="mono muted small">{colour.name}{size ? ` / ${size}` : ''}</p>
+          <p className="mono small tnum">{money(p.price)}{size ? ` / ${size}` : ''}</p>
         </div>
-        <Button busy={busy} onClick={() => (size ? addToBag() : buyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }))} disabled={soldOut}>
-          {size ? `Add, ${money(p.price)}` : 'Choose size'}
+        <Button busy={busy} disabled={soldOut} onClick={() => (size ? addToBag() : buyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }))}>
+          {size ? 'Add to bag' : 'Choose size'}
         </Button>
       </div>
 
@@ -215,82 +158,25 @@ export default function ProductPage() {
   );
 }
 
-function DeliveryEta({ price }: { price: number }) {
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    setNow(new Date());
-    const t = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(t);
-  }, []);
-  // Same two-line shape before and after the clock is known, so nothing shifts.
-  if (!now)
-    return (
-      <div className="eta">
-        <p>Leaves Prague within one working day.</p>
-        <p className="mono muted small">Standard delivery in 3 to 5 working days. Free over {money(FREE_SHIPPING_FROM)}.</p>
-      </div>
-    );
-  const cutoff = new Date(now);
-  cutoff.setHours(CUTOFF_HOUR, 0, 0, 0);
-  const weekend = now.getDay() === 0 || now.getDay() === 6;
-  const before = !weekend && now < cutoff;
-  const mins = Math.round((cutoff.getTime() - now.getTime()) / 60000);
-  const std = SHIPPING_METHODS[0];
-  return (
-    <div className="eta">
-      <p>
-        {before ? (
-          <>Order in the next <strong className="tnum">{Math.floor(mins / 60)} h {mins % 60} min</strong> and it leaves Prague today.</>
-        ) : (
-          <>Leaves Prague on the next working day.</>
-        )}
-      </p>
-      <p className="mono muted small">
-        Standard delivery {deliveryWindow(std.days, now)}. {price >= FREE_SHIPPING_FROM ? 'Free shipping on this piece.' : `Free over ${money(FREE_SHIPPING_FROM)}.`}
-      </p>
-    </div>
-  );
-}
-
-function NotifyMe({ slug, colour, size }: { slug: string; colour: string; size: string }) {
-  const key = `notify:${slug}:${colour}:${size}`;
+function NotifyMe({ slug, size }: { slug: string; size: string }) {
+  const key = `notify:${slug}:${size}`;
   const [mail, setMail] = useState('');
   const [err, setErr] = useState('');
   const [done, setDone] = useState(false);
   useEffect(() => setDone(!!read(key, '')), [key]);
-  if (done) return <p className="notify-done" role="status">We will email you if size {size} comes back. Drops rarely restock, so do not wait on it.</p>;
+  if (done) return <p className="note" role="status">We will email you if {size} comes back.</p>;
   return (
-    <form
-      className="notify"
-      noValidate
-      onSubmit={(e) => {
-        e.preventDefault();
-        const v = validEmail(mail);
-        setErr(v);
-        if (v) return;
-        write(key, mail.trim().toLowerCase());
-        setDone(true);
-      }}
-    >
-      <p className="mono">Size {size} is sold out in this colour</p>
-      <Field label="Email for a restock alert" type="email" autoComplete="email" required value={mail} onChange={setMail} error={err} onBlur={() => mail && setErr(validEmail(mail))} />
-      <Button type="submit" variant="ghost" className="btn--wide">Email me if it comes back</Button>
+    <form className="notify" noValidate onSubmit={(e) => { e.preventDefault(); const v = validEmail(mail); setErr(v); if (v) return; write(key, mail.trim().toLowerCase()); setDone(true); }}>
+      <Field label="Email me if it comes back" type="email" autoComplete="email" required value={mail} onChange={setMail} error={err} />
+      <Button type="submit" variant="ghost" className="btn--wide">Notify me</Button>
     </form>
   );
 }
 
 const GUIDE: Record<string, { head: string[]; rows: string[][]; note: string }> = {
-  tops: {
-    head: ['Size', 'Chest', 'Length', 'Sleeve'],
-    rows: [['XS', '58', '68', '60'], ['S', '61', '70', '62'], ['M', '64', '72', '64'], ['L', '67', '74', '66'], ['XL', '70', '76', '67'], ['XXL', '73', '78', '68']],
-    note: 'Garment measurements in centimetres, laid flat. Chest is measured armpit to armpit.',
-  },
-  denim: {
-    head: ['Size', 'Waist', 'Hip', 'Inside leg'],
-    rows: [['28', '72', '96', '80'], ['30', '77', '101', '81'], ['32', '82', '106', '82'], ['34', '87', '111', '83'], ['36', '92', '116', '84']],
-    note: 'Garment measurements in centimetres. If you are between sizes, take the larger one: selvedge does not stretch.',
-  },
-  headwear: { head: ['Size', 'Head'], rows: [['One size', '54 to 61']], note: 'Adjustable strap at the back.' },
+  tops: { head: ['Size', 'Chest', 'Length', 'Sleeve'], rows: [['XS', '58', '68', '60'], ['S', '61', '70', '62'], ['M', '64', '72', '64'], ['L', '67', '74', '66'], ['XL', '70', '76', '67']], note: 'Garment measurements in cm, laid flat.' },
+  belts: { head: ['Size', 'Waist', 'Total length'], rows: [['80', '70 to 80', '95'], ['90', '80 to 90', '105'], ['100', '90 to 100', '115']], note: 'Measure a belt you own from the buckle to the hole you use.' },
+  headwear: { head: ['Size', 'Head'], rows: [['One size', '54 to 61']], note: 'Stretch knit or adjustable strap.' },
 };
 
 function SizeGuide({ open, onClose, category }: { open: boolean; onClose: () => void; category: string }) {
@@ -301,25 +187,19 @@ function SizeGuide({ open, onClose, category }: { open: boolean; onClose: () => 
     if (open && !d.open) d.showModal();
     if (!open && d.open) d.close();
   }, [open]);
-  const g = GUIDE[category === 'denim' ? 'denim' : category === 'headwear' ? 'headwear' : 'tops'];
+  const g = GUIDE[category === 'belts' ? 'belts' : category === 'headwear' ? 'headwear' : 'tops'];
   return (
     <dialog ref={ref} className="modal" aria-labelledby="sg-title" onClose={onClose} onClick={(e) => e.target === ref.current && onClose()}>
       <div className="modal__inner">
         <div className="modal__head">
-          <h2 id="sg-title" className="drawer__title">Size guide</h2>
+          <h2 id="sg-title" className="mono">Size guide</h2>
           <button className="link-btn" onClick={onClose}>Close</button>
         </div>
         <table className="table tnum">
-          <thead>
-            <tr>{g.head.map((h) => <th key={h} scope="col">{h}</th>)}</tr>
-          </thead>
-          <tbody>
-            {g.rows.map((r) => (
-              <tr key={r[0]}>{r.map((c, i) => (i === 0 ? <th key={i} scope="row">{c}</th> : <td key={i}>{c}</td>))}</tr>
-            ))}
-          </tbody>
+          <thead><tr>{g.head.map((h) => <th key={h} scope="col">{h}</th>)}</tr></thead>
+          <tbody>{g.rows.map((r) => <tr key={r[0]}>{r.map((c, i) => (i === 0 ? <th key={i} scope="row">{c}</th> : <td key={i}>{c}</td>))}</tr>)}</tbody>
         </table>
-        <p className="muted small">{g.note}</p>
+        <p className="small muted">{g.note}</p>
       </div>
     </dialog>
   );

@@ -5,7 +5,6 @@ import { getProduct, FREE_SHIPPING_FROM, type ShippingId } from '../data/product
 
 export interface BagLine {
   slug: string;
-  colour: string;
   size: string;
   qty: number;
 }
@@ -15,7 +14,7 @@ export interface Order {
   createdAt: string;
   email: string;
   userId?: string;
-  lines: (BagLine & { name: string; price: number; colourName: string; image: string })[];
+  lines: (BagLine & { name: string; price: number; image: string })[];
   shipping: { method: ShippingId; price: number; days: [number, number] };
   address: { name: string; street: string; city: string; postcode: string; country: string; phone: string };
   payment: { type: 'card'; brand: string; last4: string } | { type: 'transfer' };
@@ -110,7 +109,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const add = useCallback((line: Omit<BagLine, 'qty'>, qty = 1) => {
     setBag((b) => {
-      const i = b.findIndex((l) => l.slug === line.slug && l.colour === line.colour && l.size === line.size);
+      const i = b.findIndex((l) => l.slug === line.slug && l.size === line.size);
       if (i === -1) return [...b, { ...line, qty: Math.min(qty, MAX_QTY) }];
       return b.map((l, j) => (j === i ? { ...l, qty: Math.min(l.qty + qty, MAX_QTY) } : l));
     });

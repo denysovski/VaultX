@@ -6,7 +6,7 @@ import { money, deliveryWindow } from '../lib/format';
 import * as v from '../lib/validate';
 import { read, write, remove } from '../lib/storage';
 import { Field, Select, RadioCards, Check, Button } from '../components/Field';
-import { Img } from '../components/Img';
+import { ProductImg } from '../components/Img';
 
 const COUNTRIES = [
   { value: 'CZ', label: 'Czech Republic' },
@@ -140,8 +140,7 @@ export default function Checkout() {
         userId: user?.id,
         lines: bag.map((l) => {
           const p = getProduct(l.slug)!;
-          const c = p.colours.find((x) => x.id === l.colour)!;
-          return { ...l, name: p.name, price: p.price, colourName: c.name, image: c.image };
+          return { ...l, name: p.name, price: p.price, image: p.image };
         }),
         shipping: { method: d.method, price: shipping, days: [...method.days] as [number, number] },
         address: { name: d.name.trim(), street: d.street.trim(), city: d.city.trim(), postcode: d.postcode.trim(), country: d.country, phone: d.phone.trim() },
@@ -191,7 +190,7 @@ export default function Checkout() {
       <form className="checkout__layout" onSubmit={place} noValidate>
         <div className="checkout__form">
           <section className="step" aria-labelledby="s1">
-            <h2 id="s1" className="step__title"><span className="mono">1</span> Contact</h2>
+            <h2 id="s1" className="step__title">Contact</h2>
             <div data-field="email">
               <Field label="Email" type="email" autoComplete="email" inputMode="email" required maxLength={254} value={d.email} onChange={up('email')} onBlur={blur('email')} error={show('email')} />
             </div>
@@ -199,7 +198,7 @@ export default function Checkout() {
           </section>
 
           <section className="step" aria-labelledby="s2">
-            <h2 id="s2" className="step__title"><span className="mono">2</span> Delivery</h2>
+            <h2 id="s2" className="step__title">Delivery</h2>
             <div className="row">
               <div data-field="name" className="col-2"><Field label="Full name" autoComplete="name" required maxLength={80} value={d.name} onChange={up('name')} onBlur={blur('name')} error={show('name')} /></div>
               <div data-field="street" className="col-2"><Field label="Street and house number" autoComplete="street-address" required maxLength={120} value={d.street} onChange={up('street')} onBlur={blur('street')} error={show('street')} /></div>
@@ -223,7 +222,7 @@ export default function Checkout() {
           </section>
 
           <section className="step" aria-labelledby="s3">
-            <h2 id="s3" className="step__title"><span className="mono">3</span> Payment</h2>
+            <h2 id="s3" className="step__title">Payment</h2>
             <RadioCards
               legend="Pay with"
               name="pay"
@@ -249,7 +248,7 @@ export default function Checkout() {
           </section>
 
           <section className="step" aria-labelledby="s4">
-            <h2 id="s4" className="step__title"><span className="mono">4</span> Confirm</h2>
+            <h2 id="s4" className="step__title">Confirm</h2>
             <div data-field="terms">
               <Check checked={terms} onChange={setTerms} error={show('terms')} label={<>I accept the <Link to="/terms" className="text-link" target="_blank">terms of sale</Link> and the 30-day return policy.</>} />
             </div>
@@ -270,13 +269,12 @@ export default function Checkout() {
           <ul className="summary__lines">
             {bag.map((l) => {
               const p = getProduct(l.slug)!;
-              const c = p.colours.find((x) => x.id === l.colour)!;
               return (
-                <li key={`${l.slug}-${l.colour}-${l.size}`}>
-                  <div className="summary__img"><Img src={`garment/${c.image}`} alt="" sizes="64px" /><span className="summary__qty mono tnum">{l.qty}</span></div>
+                <li key={`${l.slug}-${l.size}`}>
+                  <div className="summary__img"><ProductImg src={p.image} alt="" /><span className="summary__qty mono tnum">{l.qty}</span></div>
                   <div>
                     <p>{p.name}</p>
-                    <p className="mono muted small">{c.name} / {l.size}</p>
+                    <p className="mono muted small">Size {l.size}</p>
                   </div>
                   <p className="mono tnum">{money(p.price * l.qty)}</p>
                 </li>

@@ -31,25 +31,9 @@ const photos = {
   produce: 'vx-u-produce.jpg',
 };
 
-// Transparent garment cut-outs from pngimg.com
-const garments = {
-  'hoodie-black': 'hoodie_PNG19.png',
-  'hoodie-ash': 'hoodie_PNG30.png',
-  'hoodie-bone': 'hoodie_PNG4.png',
-  'tee-black': 'tshirt_PNG5427.png',
-  'tee-ash': 'tshirt_PNG5448.png',
-  'tee-bone': 'tshirt_PNG5434.png',
-  'tee-flare': 'tshirt_PNG5449.png',
-  'tee-teal': 'tshirt_PNG5450.png',
-  'leather-black': 'jacket_PNG8025.png',
-  'bomber-graphite': 'jacket_PNG8047.png',
-  // brand mark on the chest removed with OpenCV inpainting before export
-  'shell-acid': 'jacket_PNG8051-clean.png',
-  'denim-indigo': 'jeans_PNG5779.png',
-  'denim-wash': 'jeans_PNG5778.png',
-  'cap-black': 'cap_PNG5685.png',
-  'cap-bone': 'cap_PNG5688.png',
-};
+// Product images are hotlinked from Pinterest (see src/data/products.ts), so only
+// the lookbook photos are processed here.
+const garments = {};
 
 async function emit(pipeline, dir, name, widths, quality) {
   fs.mkdirSync(dir, { recursive: true });

@@ -1,35 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, Link } from 'react-router';
-import { PRODUCTS, CATEGORIES, type Category, type Colourway, type Product } from '../data/products';
+import { PRODUCTS, CATEGORIES, totalStock, type Category } from '../data/products';
 import { ProductCard } from '../components/ProductCard';
 import { useDebounced } from '../lib/hooks';
 
-const TONES = [
-  { id: 'black', label: 'Black', match: ['black'] },
-  { id: 'grey', label: 'Grey', match: ['ash', 'graphite'] },
-  { id: 'white', label: 'Bone', match: ['bone'] },
-  { id: 'blue', label: 'Blue', match: ['indigo', 'wash'] },
-  { id: 'colour', label: 'Colour', match: ['flare', 'teal', 'acid'] },
-];
-const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36', 'One size'];
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', '80', '90', '100', 'One size'];
 const SORTS = [
   { id: 'new', label: 'Newest' },
-  { id: 'low', label: 'Price low' },
-  { id: 'high', label: 'Price high' },
+  { id: 'low', label: 'Price, low to high' },
+  { id: 'high', label: 'Price, high to low' },
 ];
-
-type Hit = { product: Product; colour?: Colourway };
 
 export default function Shop() {
   const [params, setParams] = useSearchParams();
   const cat = params.get('c') as Category | null;
-  const tone = params.get('tone');
   const size = params.get('size');
   const sort = params.get('sort') ?? 'new';
   const stockOnly = params.get('stock') === '1';
   const [q, setQ] = useState(params.get('q') ?? '');
   const query = useDebounced(q.trim().toLowerCase(), 250);
-  const [sheet, setSheet] = useState(false);
+  const [panel, setPanel] = useState(false);
+  const [big, setBig] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const set = (key: string, value: string | null) => {
@@ -53,158 +44,114 @@ export default function Shop() {
   }, [query]);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('is-locked', sheet);
-  }, [sheet]);
+    document.documentElement.classList.toggle('is-locked', panel);
+    if (!panel) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setPanel(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [panel]);
 
-  const hits = useMemo<Hit[]>(() => {
-    const toneMatch = TONES.find((t) => t.id === tone)?.match;
-    let list: Hit[] = [];
-    for (const p of PRODUCTS) {
-      if (cat && p.category !== cat) continue;
+  const hits = useMemo(() => {
+    let list = PRODUCTS.filter((p) => {
+      if (cat && p.category !== cat) return false;
+      if (size && !(size in p.stock)) return false;
+      if (stockOnly && (size ? (p.stock[size] ?? 0) === 0 : totalStock(p) === 0)) return false;
       if (query) {
-        const hay = [p.name, p.line, p.category, p.code, ...p.colours.map((c) => c.name)].join(' ').toLowerCase();
-        if (!query.split(/\s+/).every((w) => hay.includes(w) || hay.includes(w.replace(/s$/, '')))) continue;
+        const hay = `${p.name} ${p.spec} ${p.category} ${p.code}`.toLowerCase();
+        if (!query.split(/\s+/).every((w) => hay.includes(w) || hay.includes(w.replace(/s$/, '')))) return false;
       }
-      const colours = p.colours.filter((c) => {
-        if (toneMatch && !toneMatch.includes(c.id)) return false;
-        if (size && !(size in c.stock)) return false;
-        if (stockOnly && (size ? (c.stock[size] ?? 0) === 0 : Object.values(c.stock).every((n) => n === 0))) return false;
-        return true;
-      });
-      if (!colours.length) continue;
-      // When filtering by colour, show the matching colourway on the card.
-      if (toneMatch) list.push(...colours.map((c) => ({ product: p, colour: c })));
-      else list.push({ product: p });
-    }
-    if (sort === 'low') list = [...list].sort((a, b) => a.product.price - b.product.price);
-    if (sort === 'high') list = [...list].sort((a, b) => b.product.price - a.product.price);
-    if (sort === 'new') list = [...list].sort((a, b) => Number(!!b.product.isNew) - Number(!!a.product.isNew));
+      return true;
+    });
+    if (sort === 'low') list = [...list].sort((a, b) => a.price - b.price);
+    else if (sort === 'high') list = [...list].sort((a, b) => b.price - a.price);
+    else list = [...list].sort((a, b) => Number(!!b.isNew) - Number(!!a.isNew));
     return list;
-  }, [cat, tone, size, sort, stockOnly, query]);
+  }, [cat, size, sort, stockOnly, query]);
 
-  const activeCount = [cat, tone, size, stockOnly ? '1' : null].filter(Boolean).length;
-  const title = cat ? CATEGORIES.find((c) => c.id === cat)?.label ?? 'Shop' : 'Shop';
-
-  const filters = (
-    <div className="filters__groups">
-      <FilterGroup label="Category">
-        <Toggle on={!cat} onClick={() => set('c', null)}>All</Toggle>
-        {CATEGORIES.map((c) => (
-          <Toggle key={c.id} on={cat === c.id} onClick={() => set('c', c.id)}>{c.label}</Toggle>
-        ))}
-      </FilterGroup>
-      <FilterGroup label="Colour">
-        {TONES.map((t) => (
-          <Toggle key={t.id} on={tone === t.id} onClick={() => set('tone', t.id)}>
-            <span className={`dot dot--${t.id}`} aria-hidden="true" />
-            {t.label}
-          </Toggle>
-        ))}
-      </FilterGroup>
-      <FilterGroup label="Size">
-        {SIZES.map((s) => (
-          <Toggle key={s} on={size === s} onClick={() => set('size', s)}>{s}</Toggle>
-        ))}
-      </FilterGroup>
-      <FilterGroup label="Sort">
-        {SORTS.map((s) => (
-          <Toggle key={s.id} on={sort === s.id} onClick={() => set('sort', s.id === 'new' ? null : s.id)}>{s.label}</Toggle>
-        ))}
-      </FilterGroup>
-      <FilterGroup label="Stock">
-        <Toggle on={stockOnly} onClick={() => set('stock', '1')}>In stock only</Toggle>
-      </FilterGroup>
-    </div>
-  );
+  const active = [size, stockOnly ? '1' : null, sort !== 'new' ? sort : null].filter(Boolean).length;
+  const title = cat ? CATEGORIES.find((c) => c.id === cat)?.label ?? 'Shop' : 'New arrivals';
 
   return (
     <div className="shop" data-theme="light">
-      <header className="shop__head">
-        <h1 className="page-title">{title}</h1>
-        <div className="shop__search">
-          <label htmlFor="shop-q" className="sr-only">Search the drop</label>
-          <input
-            ref={searchRef}
-            id="shop-q"
-            type="search"
-            className="search"
-            placeholder="Search: hoodie, black, denim"
-            value={q}
-            maxLength={60}
-            onChange={(e) => setQ(e.target.value)}
-            autoComplete="off"
-            enterKeyHint="search"
-          />
-          <p className="mono muted tnum" aria-live="polite">
-            {hits.length} {hits.length === 1 ? 'result' : 'results'}
-          </p>
+      <h1 className="sr-only">{title}</h1>
+      <nav className="cats cats--page" aria-label="Categories">
+        <div className="cats__row">
+          <Link to="/shop" className={`cats__link${!cat ? ' is-on' : ''}`} aria-current={!cat ? 'page' : undefined}>New arrivals</Link>
+          {CATEGORIES.map((c) => (
+            <Link key={c.id} to={`/shop?c=${c.id}`} className={`cats__link${cat === c.id ? ' is-on' : ''}`} aria-current={cat === c.id ? 'page' : undefined}>
+              {c.label}
+            </Link>
+          ))}
         </div>
-      </header>
+      </nav>
 
-      <div className="filters filters--bar">{filters}</div>
-
-      <div className="filters-mobile">
-        <button className="btn btn--ghost" onClick={() => setSheet(true)} aria-expanded={sheet} aria-controls="filter-sheet">
-          <span className="btn__label">Filters{activeCount ? ` (${activeCount})` : ''}</span>
-        </button>
-        {activeCount > 0 && (
-          <button className="link-btn" onClick={() => setParams(new URLSearchParams(), { replace: true })}>Clear all</button>
-        )}
-      </div>
-
-      <div id="filter-sheet" className={`sheet${sheet ? ' sheet--open' : ''}`} role="dialog" aria-modal="true" aria-label="Filters" inert={!sheet} aria-hidden={!sheet}>
-        <button className="sheet__scrim" tabIndex={-1} aria-label="Close filters" onClick={() => setSheet(false)} />
-        <div className="sheet__panel">
-          <div className="sheet__head">
-            <p className="drawer__title">Filters</p>
-            <button className="link-btn" onClick={() => setSheet(false)}>Close</button>
+      <div className="toolbar">
+        <p className="toolbar__count tnum" aria-live="polite">{hits.length} {hits.length === 1 ? 'product' : 'products'}</p>
+        <div className="toolbar__search">
+          <label htmlFor="shop-q" className="sr-only">Search products</label>
+          <input ref={searchRef} id="shop-q" type="search" className="search" placeholder="Search" value={q} maxLength={60} onChange={(e) => setQ(e.target.value)} autoComplete="off" enterKeyHint="search" />
+        </div>
+        <div className="toolbar__right">
+          <div className="toolbar__view" role="group" aria-label="Card size">
+            <button type="button" className={`view-btn${big ? ' is-on' : ''}`} aria-pressed={big} onClick={() => setBig(true)} aria-label="Bigger cards">
+              <span className="ico ico--big" aria-hidden="true" />
+            </button>
+            <button type="button" className={`view-btn${!big ? ' is-on' : ''}`} aria-pressed={!big} onClick={() => setBig(false)} aria-label="Smaller cards">
+              <span className="ico ico--small" aria-hidden="true" />
+            </button>
           </div>
-          {filters}
-          <button className="btn btn--solid btn--wide" onClick={() => setSheet(false)}>
-            <span className="btn__label">Show {hits.length} {hits.length === 1 ? 'result' : 'results'}</span>
+          <button type="button" className="toolbar__filter" onClick={() => setPanel(true)} aria-expanded={panel} aria-controls="filters">
+            Filter and sort{active ? ` [${active}]` : ''}
           </button>
         </div>
       </div>
 
       <h2 className="sr-only">Products</h2>
       {hits.length ? (
-        <div className="grid">
-          {hits.map((h, i) => (
-            <ProductCard key={`${h.product.slug}-${h.colour?.id ?? 'all'}`} product={h.product} colour={h.colour} priority={i < 4} />
-          ))}
+        <div className={`grid${big ? ' grid--big' : ''}`}>
+          {hits.map((p, i) => <ProductCard key={p.slug} product={p} priority={i < 4} />)}
         </div>
       ) : (
         <div className="empty">
-          <p className="empty__big">Nothing in the vault matches</p>
-          <p>
-            {query ? <>No piece matches “{query}”. </> : null}
-            Try fewer filters, or search for hoodie, tee, jacket or denim.
-          </p>
+          <p className="empty__big">Nothing matches</p>
+          <p>{query ? <>No product matches “{query}”. </> : null}Try fewer filters, or search for hoodie, knit, jacket or belt.</p>
           <div className="empty__actions">
-            <button className="btn btn--solid" onClick={() => { setQ(''); setParams(new URLSearchParams(), { replace: true }); }}>
-              <span className="btn__label">Clear search and filters</span>
-            </button>
-            <Link to="/shop/bunker-hoodie" className="text-link">Or see the most wanted piece</Link>
+            <button className="btn" onClick={() => { setQ(''); setParams(new URLSearchParams(), { replace: true }); }}>Clear search and filters</button>
           </div>
         </div>
       )}
-    </div>
-  );
-}
 
-function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="fgroup" role="group" aria-label={label}>
-      <span className="fgroup__label mono">{label}</span>
-      <div className="fgroup__opts">{children}</div>
+      <div id="filters" className={`panel${panel ? ' panel--open' : ''}`} role="dialog" aria-modal="true" aria-label="Filter and sort" inert={!panel} aria-hidden={!panel}>
+        <button className="panel__scrim" tabIndex={-1} aria-label="Close filters" onClick={() => setPanel(false)} />
+        <div className="panel__body">
+          <div className="panel__head">
+            <p className="mono">Filter and sort</p>
+            <button className="link-btn" onClick={() => setPanel(false)}>Close</button>
+          </div>
+          <fieldset className="fset">
+            <legend className="mono">Sort</legend>
+            {SORTS.map((s) => (
+              <button key={s.id} type="button" className={`opt${sort === s.id ? ' is-on' : ''}`} aria-pressed={sort === s.id} onClick={() => set('sort', s.id === 'new' ? null : s.id)}>{s.label}</button>
+            ))}
+          </fieldset>
+          <fieldset className="fset">
+            <legend className="mono">Size</legend>
+            <div className="fset__wrap">
+              {SIZES.map((s) => (
+                <button key={s} type="button" className={`opt opt--box${size === s ? ' is-on' : ''}`} aria-pressed={size === s} onClick={() => set('size', s)}>{s}</button>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset className="fset">
+            <legend className="mono">Availability</legend>
+            <button type="button" className={`opt${stockOnly ? ' is-on' : ''}`} aria-pressed={stockOnly} onClick={() => set('stock', '1')}>In stock only</button>
+          </fieldset>
+          <div className="panel__foot">
+            <button className="link-btn" onClick={() => { const n = new URLSearchParams(); if (cat) n.set('c', cat); setParams(n, { replace: true }); }}>Clear</button>
+            <button className="btn" onClick={() => setPanel(false)}>Show {hits.length} {hits.length === 1 ? 'product' : 'products'}</button>
+          </div>
+        </div>
+      </div>
     </div>
-  );
-}
-
-function Toggle({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button type="button" className={`toggle${on ? ' is-on' : ''}`} aria-pressed={on} onClick={onClick}>
-      {children}
-    </button>
   );
 }

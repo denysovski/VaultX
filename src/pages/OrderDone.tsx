@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router';
 import { useStore, orderStatus } from '../lib/store';
 import { money, deliveryWindow } from '../lib/format';
-import { Img } from '../components/Img';
+import { ProductImg } from '../components/Img';
 
 export default function OrderDone() {
   const { id = '' } = useParams();
@@ -28,7 +28,7 @@ export default function OrderDone() {
   return (
     <div className="order" data-theme="light">
       <p className="mono muted">Order {o.id}</p>
-      <h1 className="mega pulse-in">Locked in</h1>
+      <h1 className="page-title">Order confirmed</h1>
       <p className="order__lead">
         Thank you, {o.address.name.split(' ')[0]}. A receipt is on its way to <strong>{o.email}</strong>. Expected delivery {deliveryWindow(o.shipping.days, new Date(o.createdAt))}.
       </p>
@@ -54,9 +54,9 @@ export default function OrderDone() {
           <h2 id="oi" className="section-title">Pieces</h2>
           <ul className="summary__lines">
             {o.lines.map((l) => (
-              <li key={`${l.slug}-${l.colour}-${l.size}`}>
-                <div className="summary__img"><Img src={`garment/${l.image}`} alt="" sizes="64px" /><span className="summary__qty mono tnum">{l.qty}</span></div>
-                <div><p>{l.name}</p><p className="mono muted small">{l.colourName} / {l.size}</p></div>
+              <li key={`${l.slug}-${l.size}`}>
+                <div className="summary__img"><ProductImg src={l.image} alt="" /><span className="summary__qty mono tnum">{l.qty}</span></div>
+                <div><p>{l.name}</p><p className="mono muted small">Size {l.size}</p></div>
                 <p className="mono tnum">{money(l.price * l.qty)}</p>
               </li>
             ))}

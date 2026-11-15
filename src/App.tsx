@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { lazyPage } from './lib/lazy';
-import { Routes, Route } from 'react-router';
+import { Routes, Route, useLocation } from 'react-router';
 import { StoreProvider } from './lib/store';
 import { Nav } from './components/Nav';
 import { BagDrawer } from './components/Bag';
@@ -46,6 +46,16 @@ function PageLoading() {
   );
 }
 
+/** Each page enters with a short fade, lift and un-blur when the route changes. */
+function Page({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation();
+  return (
+    <div key={pathname} className="page-enter">
+      {children}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <StoreProvider>
@@ -55,6 +65,7 @@ export default function App() {
       <Nav />
       <main id="main">
         <Suspense fallback={<PageLoading />}>
+          <Page>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/shop" element={<Shop />} />
@@ -68,6 +79,7 @@ export default function App() {
             <Route path="/terms" element={<Legal kind="terms" />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Page>
         </Suspense>
       </main>
       <Footer />
