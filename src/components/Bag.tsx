@@ -5,6 +5,7 @@ import { getProduct, FREE_SHIPPING_FROM } from '../data/products';
 import { money } from '../lib/format';
 import { ProductImg } from './Img';
 import { Stepper } from './Field';
+import { Suggest } from './Suggest';
 
 export function BagDrawer() {
   const { bag, bagOpen, setBagOpen, setQty, removeLine, subtotal, freeShippingLeft, count, ready } = useStore();
@@ -83,6 +84,7 @@ export function BagDrawer() {
               })}
             </ul>
             <div className="drawer__foot">
+              <Suggest />
               <p className="sum-row"><span>Subtotal</span><span className="tnum">{money(subtotal)}</span></p>
               <p className="muted small">Shipping and codes at checkout. VAT included.</p>
               <button className="btn btn--wide" onClick={() => { setBagOpen(false); nav('/checkout'); }}>Checkout</button>

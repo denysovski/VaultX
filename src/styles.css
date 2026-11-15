@@ -475,7 +475,7 @@ legend { padding: 0; }
 .drawer--open { visibility: visible; transition: none; }
 .drawer__scrim { position: absolute; inset: 0; border: 0; background: rgb(17 17 17 / 0.35); opacity: 0; transition: opacity 320ms; }
 .drawer--open .drawer__scrim { opacity: 1; }
-.drawer__panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(440px, 100vw); background: var(--paper); color: var(--ink); display: flex; flex-direction: column; transform: translateX(100%); transition: transform 300ms var(--ease-io); }
+.drawer__panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); background: var(--paper); color: var(--ink); display: flex; flex-direction: column; transform: translateX(100%); transition: transform 300ms var(--ease-io); }
 .drawer--open .drawer__panel { transform: none; transition: transform 440ms var(--ease-out); }
 .drawer__panel:focus { outline: none; }
 .drawer__head { display: flex; justify-content: space-between; align-items: center; height: var(--nav-h); padding: 0 var(--s5); border-bottom: 1px solid var(--line); }
@@ -821,3 +821,23 @@ legend { padding: 0; }
 .fold.is-open .fold__inner { opacity: 1; transform: none; transition-delay: 80ms; }
 .nsearch__field input::-webkit-search-cancel-button, .nsearch__field input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
 .auth .tab.is-on { text-decoration: none; }
+
+/* bag: "you might like" rail, three cards with the fourth peeking */
+.suggest { display: grid; gap: var(--s2); padding-bottom: var(--s3); margin-bottom: var(--s1); border-bottom: 1px solid var(--line); }
+.suggest__head { display: flex; justify-content: space-between; align-items: center; }
+.suggest__head h3 { font-size: var(--t-hud); letter-spacing: 0.1em; text-transform: uppercase; }
+.suggest__nav { display: flex; gap: 2px; }
+.suggest__nav button { width: 30px; height: 26px; border: 1px solid var(--line-strong); background: none; font-size: 13px; transition: background-color 160ms, color 160ms, opacity 200ms; }
+.suggest__nav button:hover:not(:disabled) { background: var(--ink); color: var(--paper); }
+.suggest__nav button:disabled { opacity: 0.3; cursor: default; }
+.suggest__rail { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 3 * 8px) / 3.35); gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; margin-right: calc(-1 * var(--s5)); padding-right: var(--s5); }
+.suggest__rail::-webkit-scrollbar { display: none; }
+.suggest__card { scroll-snap-align: start; display: grid; gap: 3px; align-content: start; font-size: 11px; }
+.suggest__img { position: relative; display: block; aspect-ratio: 4 / 5; background: var(--card); overflow: hidden; }
+.suggest__name { text-decoration: none; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.25; margin-top: 4px; }
+.suggest__price { color: var(--muted); }
+.suggest__why { font-size: 9px; letter-spacing: 0.06em; color: var(--muted); }
+.suggest__sizes { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 2px; }
+.suggest__sizes button { min-width: 26px; height: 22px; padding: 0 4px; border: 1px solid var(--line-strong); background: none; font-size: 10px; letter-spacing: 0.04em; transition: background-color 160ms, color 160ms; }
+.suggest__sizes button:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.drawer__foot { max-height: 70vh; overflow-y: auto; }
