@@ -307,14 +307,13 @@ p.type, h1.type, h2.type { display: block; }
 .pimg.is-loaded { filter: grayscale(1) brightness(var(--lift)) contrast(1.08); opacity: 1; transform: var(--fit); }
 [data-theme='dark'] .pimg { mix-blend-mode: normal; }
 .card__link:hover .pimg.is-loaded { transform: var(--fit) scale(1.04); }
-.card__code { position: absolute; left: var(--s3); bottom: var(--s3); font-size: 11px; color: var(--muted); transition: opacity 360ms var(--ease-out), transform 460ms var(--ease-out); }
+.card__code { position: absolute; z-index: 2; left: var(--s3); bottom: var(--s3); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); transition: opacity 360ms var(--ease-out), transform 460ms var(--ease-out); }
 .card__link:hover .card__code, .card__link:focus-visible .card__code { opacity: 0; transform: translateY(10px); }
 .card__flag { position: absolute; z-index: 2; top: var(--s3); left: var(--s3); font-size: 18px; letter-spacing: 0.08em; }
 .card__track { position: absolute; inset: 14% 16%; border: 1px solid transparent; opacity: 0; transition: opacity 200ms, inset 420ms var(--ease-out); pointer-events: none; }
 .card__track::before, .card__track::after { content: ''; position: absolute; width: 10px; height: 10px; border-color: var(--fg); border-style: solid; }
 .card__track::before { left: -1px; top: -1px; border-width: 1px 0 0 1px; }
 .card__track::after { right: -1px; bottom: -1px; border-width: 0 1px 1px 0; }
-.card__track .mono { position: absolute; left: 0; bottom: -18px; font-size: 10px; white-space: nowrap; }
 .card__link:hover .card__track, .card__link:focus-visible .card__track { opacity: 1; inset: 10% 12%; }
 .card__meta { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s4); padding: var(--s3) clamp(10px, 2.6vw, 48px) 0; }
 .card__name { font-size: var(--t-xs); letter-spacing: 0.08em; text-transform: uppercase; line-height: 1.4; margin: 0; }
@@ -874,7 +873,7 @@ legend { padding: 0; }
 .card--fx .card__link:hover .card__term span, .card--fx .card__link:focus-visible .card__term span { clip-path: inset(0); }
 .card--fx .card__frame > .pimg { z-index: 1; }
 .card--fx .card__link:hover .pimg.is-loaded, .card--fx .card__link:focus-visible .pimg.is-loaded { filter: grayscale(1) brightness(var(--lift)) contrast(1.32); }
-.card--fx .card__meta { clip-path: inset(0 0 100% 0); opacity: 0; transform: translateY(-14px); transition: clip-path 520ms var(--ease-out), opacity 360ms, transform 520ms var(--ease-out); }
+.card--fx .card__meta { justify-content: center; gap: 50px; padding-left: 8px; padding-right: 8px; clip-path: inset(0 0 100% 0); opacity: 0; transform: translateY(-14px); transition: clip-path 520ms var(--ease-out), opacity 360ms, transform 520ms var(--ease-out); }
 .card--fx .card__link:hover .card__meta, .card--fx .card__link:focus-visible .card__meta { clip-path: inset(0 0 -20% 0); opacity: 1; transform: none; }
 @media (hover: none) { .card--fx .card__meta { clip-path: none; opacity: 1; transform: none; } }
 

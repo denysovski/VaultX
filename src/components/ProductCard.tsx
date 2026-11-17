@@ -64,11 +64,9 @@ export function ProductCard({ product: p, priority, vt, fx }: { product: Product
             </div>
           )}
           <ProductImg src={p.image} alt={p.name} priority={priority} />
-          <span className="card__code mono" aria-hidden="true">{p.code}</span>
+          <span className="card__code mono" aria-hidden="true">{p.spec}</span>
           {flag && <span className="card__flag mono">{flag}</span>}
-          <span className="card__track" aria-hidden="true">
-            <span className="mono">{p.spec}</span>
-          </span>
+          <span className="card__track" aria-hidden="true" />
         </div>
         <div className="card__meta">
           <h3 className="card__name">{p.name}</h3>
