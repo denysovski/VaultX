@@ -122,7 +122,7 @@ export default function Home() {
           <AroundMark as="h2" markRef={slot} className="hud__t hud--tc mono hud__center" text="In the grey of the city we wear the night as a uniform. Cut close, built heavy, made to outlast the trend." />
           <p className="hud__t hud--tr mono"><Type delay={200}>{'Delicate lines\nwool / nylon'}</Type></p>
           <p className="hud__t hud--ml mono"><Type delay={350}>{'Machine & human\nAI 0.98'}</Type></p>
-          <a href="#outer-title" className="band__shop" onClick={(e) => { e.preventDefault(); document.getElementById('outer-title')?.closest('section')?.scrollIntoView({ behavior: 'smooth' }); }}>Our shop <span aria-hidden="true">↓</span></a>
+          <a href="#outer-title" className="band__shop" onClick={(e) => { e.preventDefault(); document.getElementById('outer-title')?.closest('section')?.scrollIntoView({ behavior: 'smooth' }); }}>Our shop</a>
           <p className="hud__t hud--mr mono"><Type delay={450}>{'Controlled\ncurves'}</Type></p>
           <Link to="/about" className="hud--bl hud__cta">About us</Link>
           <p ref={bold} className="hud__t hud--bc mono hud__big hud__one">Bold strokes / soft light</p>
