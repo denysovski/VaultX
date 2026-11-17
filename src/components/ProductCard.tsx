@@ -17,13 +17,20 @@ const TERM = [
   'pkt loss 0.00%', 'mem 4096k ok', 'ping prague 4 ms', 'cloak.enable()', 'void > /dev/null',
   'EOF // stay out',
 ];
-const pick = () => {
-  const out: string[] = [];
-  for (let i = 0; i < 64; i++) {
-    const t = TERM[Math.floor(Math.random() * TERM.length)];
-    out.push(Math.random() < 0.3 ? `${t}  ${Math.random().toString(16).slice(2, 8)}` : t);
-  }
-  return out;
+// A few fragments scattered around the edges of the frame (behind the photo).
+const SLOTS = [
+  { left: '6%', top: '14%' }, { right: '6%', top: '12%' }, { left: '6%', top: '46%' }, { right: '6%', top: '52%' },
+  { left: '8%', bottom: '16%' }, { right: '8%', bottom: '20%' }, { left: '34%', top: '8%' }, { left: '30%', bottom: '9%' },
+];
+type Bit = { text: string; pos: React.CSSProperties };
+const pick = (): Bit[] => {
+  const slots = [...SLOTS].sort(() => Math.random() - 0.5).slice(0, 4 + Math.floor(Math.random() * 3));
+  const words = [...TERM].sort(() => Math.random() - 0.5); // no fragment twice on one card
+  return slots.map((pos, i) => {
+    const t = words[i];
+    const jitter = `${Math.round(Math.random() * 16 - 8)}px`;
+    return { text: Math.random() < 0.35 ? `${t} ${Math.random().toString(16).slice(2, 6)}` : t, pos: { ...pos, translate: `0 ${jitter}` } };
+  });
 };
 
 // Flag text: varied per product but fixed per slug, so the prerendered page
@@ -41,7 +48,7 @@ function flagFor(p: Product): string | null {
 
 export function ProductCard({ product: p, priority, vt, fx }: { product: Product; priority?: boolean; vt?: boolean; fx?: boolean }) {
   const flag = flagFor(p);
-  const [term, setTerm] = useState<string[] | null>(null);
+  const [term, setTerm] = useState<Bit[] | null>(null);
   return (
     <article
       className={`card${fx ? ' card--fx' : ''}`}
@@ -53,7 +60,7 @@ export function ProductCard({ product: p, priority, vt, fx }: { product: Product
         <div className="card__frame">
           {fx && (
             <div className="card__term mono" aria-hidden="true">
-              {term?.map((l, i) => <span key={i} style={{ ['--i' as string]: i }}>{l}</span>)}
+              {term?.map((l, i) => <span key={i} style={{ ...l.pos, ['--i' as string]: i }}>{l.text}</span>)}
             </div>
           )}
           <ProductImg src={p.image} alt={p.name} priority={priority} />

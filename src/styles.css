@@ -866,32 +866,17 @@ legend { padding: 0; }
 .band__mark { position: absolute; left: 0; top: 0; z-index: 4; height: auto; aspect-ratio: 1; color: #fff; pointer-events: none; will-change: transform; filter: drop-shadow(0 0 10px rgb(255 255 255 / 0.35)); }
 .band .hud > * { transition: opacity 120ms linear; }
 
-/* landing cards: terminal backdrop + glitch on hover, name and price slide out */
-.card--fx .card__term {
-  position: absolute; inset: 0; z-index: 0; overflow: hidden; columns: 2; column-gap: 8%; column-fill: auto;
-  padding: 16% 7% 12%; font-size: 10px; line-height: 1.55; letter-spacing: 0.06em; color: rgb(17 17 17 / 0.6); white-space: nowrap;
-  opacity: 0; filter: blur(8px); transform: scale(1.04);
-  transition: opacity 600ms var(--ease-out), filter 700ms var(--ease-out), transform 900ms var(--ease-out);
-}
-.card--fx .card__term span { display: block; overflow: hidden; text-overflow: clip; animation: term-in 500ms steps(6) both; animation-delay: calc(var(--i) * 45ms); animation-play-state: paused; }
-.card--fx .card__term span:nth-child(3n) { color: rgb(17 17 17 / 0.85); }
-.card--fx .card__term span:nth-child(5n) { padding-left: 2em; }
-@keyframes term-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+/* landing cards: faint terminal fragments behind the photo, photo gains contrast on hover; name and price slide out */
+.card--fx .card__term { position: absolute; inset: 0; z-index: 0; pointer-events: none; font-size: 10px; letter-spacing: 0.06em; color: rgb(17 17 17 / 0.3);
+  opacity: 0; filter: blur(4px); transition: opacity 600ms var(--ease-out), filter 700ms var(--ease-out); }
+.card--fx .card__term span { position: absolute; white-space: nowrap; clip-path: inset(0 100% 0 0); transition: clip-path 700ms var(--ease-out); transition-delay: calc(var(--i) * 70ms); }
+.card--fx .card__link:hover .card__term, .card--fx .card__link:focus-visible .card__term { opacity: 1; filter: blur(0.6px); }
+.card--fx .card__link:hover .card__term span, .card--fx .card__link:focus-visible .card__term span { clip-path: inset(0); }
 .card--fx .card__frame > .pimg { z-index: 1; }
-.card--fx .card__frame::before, .card--fx .card__frame::after { content: ''; position: absolute; left: 0; right: 0; z-index: 3; pointer-events: none; background: rgb(17 17 17 / 0.08); opacity: 0; }
-.card--fx .card__frame::before { top: 28%; height: 7%; }
-.card--fx .card__frame::after { top: 61%; height: 3%; background: rgb(255 255 255 / 0.5); mix-blend-mode: difference; }
-.card--fx .card__link:hover .card__term, .card--fx .card__link:focus-visible .card__term { opacity: 1; filter: blur(1.2px); transform: none; }
-.card--fx .card__link:hover .card__term span, .card--fx .card__link:focus-visible .card__term span { animation-play-state: running; }
-.card--fx .card__link:hover .card__frame::before { animation: fx-slice 520ms steps(4) both; }
-.card--fx .card__link:hover .card__frame::after { animation: fx-slice 420ms steps(3) 120ms both; }
-.card--fx .card__link:hover .pimg.is-loaded { animation: fx-jolt 420ms steps(4) 1; }
-@keyframes fx-slice { 0% { opacity: 1; transform: translateX(-8%); } 40% { transform: translateX(6%); top: 44%; } 70% { transform: translateX(-3%); top: 18%; } 100% { opacity: 0; transform: none; } }
-@keyframes fx-jolt { 25% { translate: -4px 0; filter: grayscale(1) brightness(var(--lift)) contrast(1.5); } 50% { translate: 3px 1px; } 75% { translate: -1px 0; } 100% { translate: 0 0; } }
+.card--fx .card__link:hover .pimg.is-loaded, .card--fx .card__link:focus-visible .pimg.is-loaded { filter: grayscale(1) brightness(var(--lift)) contrast(1.32); }
 .card--fx .card__meta { clip-path: inset(0 0 100% 0); opacity: 0; transform: translateY(-14px); transition: clip-path 520ms var(--ease-out), opacity 360ms, transform 520ms var(--ease-out); }
 .card--fx .card__link:hover .card__meta, .card--fx .card__link:focus-visible .card__meta { clip-path: inset(0 0 -20% 0); opacity: 1; transform: none; }
 @media (hover: none) { .card--fx .card__meta { clip-path: none; opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .card--fx .card__link:hover .pimg.is-loaded, .card--fx .card__link:hover .card__frame::before, .card--fx .card__link:hover .card__frame::after { animation: none; } }
 
 /* ---------- /new: drop page ---------- */
 .page-enter > .drop:first-child { padding-top: 0; }
