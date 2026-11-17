@@ -11,6 +11,7 @@ import Home from './pages/Home';
 const Shop = lazyPage(() => import('./pages/Shop'));
 const ProductPage = lazyPage(() => import('./pages/Product'));
 const About = lazyPage(() => import('./pages/About'));
+const New = lazyPage(() => import('./pages/New'));
 const Collab = lazyPage(() => import('./pages/Collab'));
 const Checkout = lazyPage(() => import('./pages/Checkout'));
 const OrderDone = lazyPage(() => import('./pages/OrderDone'));
@@ -26,6 +27,7 @@ export function preloadPath(path: string) {
   if (p === '/shop') return Shop.preload();
   if (p.startsWith('/shop/')) return ProductPage.preload();
   if (p === '/about') return About.preload();
+  if (p === '/new') return New.preload();
   if (p.startsWith('/collab/')) return Collab.preload();
   if (p === '/checkout') return Checkout.preload();
   if (p.startsWith('/order/')) return OrderDone.preload();
@@ -73,6 +75,7 @@ export default function App() {
             <Route path="/shop" element={<Shop />} />
             <Route path="/shop/:slug" element={<ProductPage />} />
             <Route path="/about" element={<About />} />
+            <Route path="/new" element={<New />} />
             <Route path="/collab/:group" element={<Collab />} />
             <Route path="/lookbook" element={<Navigate to="/about" replace />} />
             <Route path="/checkout" element={<Checkout />} />

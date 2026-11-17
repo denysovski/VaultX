@@ -5,7 +5,7 @@ import { CATEGORIES, PRODUCTS } from '../data/products';
 import { money } from '../lib/format';
 
 const LINKS = [
-  { to: '/shop?new=1', label: 'New arrivals' },
+  { to: '/new', label: 'New arrivals' },
   { to: '/shop', label: 'Shop' },
   { to: '/about', label: 'About us' },
 ];
@@ -122,7 +122,7 @@ function NavSearch({ onOpen }: { onOpen: (v: boolean) => void }) {
 export function Nav() {
   const { count, setBagOpen, user, ready } = useStore();
   const loc = useLocation();
-  const home = loc.pathname === '/';
+  const home = loc.pathname === '/' || loc.pathname === '/new'; // pages that open on a dark full-screen hero
   const [hidden, setHidden] = useState(false);
   const [compact, setCompact] = useState(false);
   const [solid, setSolid] = useState(!home);
@@ -172,8 +172,7 @@ export function Nav() {
   }, [open]);
 
   const isActive = (to: string) => {
-    if (to === '/shop?new=1') return loc.pathname === '/shop' && loc.search.includes('new=1');
-    if (to === '/shop') return loc.pathname.startsWith('/shop') && !loc.search.includes('new=1');
+    if (to === '/shop') return loc.pathname.startsWith('/shop');
     return loc.pathname.startsWith(to);
   };
 

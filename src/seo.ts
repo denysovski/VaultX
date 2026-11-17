@@ -102,6 +102,7 @@ export function getMeta(pathname: string): Meta {
   }
 
   const fixed: Record<string, Omit<Meta, 'path'>> = {
+    '/new': { title: 'Drop 07: Curfew | VAULTX', description: 'The next VAULTX drop lands on 4 December at 20:00 CET. Nine heavy black pieces, 120 of each, no restock.' },
     '/about': {
       title: 'About us | VAULTX',
       description: 'VAULTX makes heavy black clothing in Prague for the people who stay out late. Small drops, no restocks, made to last.',

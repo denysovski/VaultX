@@ -38,23 +38,26 @@ export function Type({ children, as: Tag = 'span', className, delay = 0, speed =
       cancelAnimationFrame(t);
     };
   }, [children, delay, step]);
-  const shown = n < 0 ? '' : children.slice(0, n);
+  const k = Math.max(0, n);
+  // One layer: the typed part, the caret, then the rest of the text kept in the
+  // layout but invisible. Lines therefore break in their final places from the
+  // first letter instead of running long and jumping at the end.
   return (
     <Tag ref={ref as never} className={`type ${className ?? ''}`}>
       <span className="sr-only">{children}</span>
-      <span aria-hidden="true" className="type__ghost">{children}</span>
-      <span aria-hidden="true" className="type__live">
-        {shown}
+      <span aria-hidden="true" className="type__text">
+        {children.slice(0, k)}
         {n >= 0 && n < children.length && <span className="type__caret" />}
+        <span className="type__rest">{children.slice(k)}</span>
       </span>
     </Tag>
   );
 }
 
 /** The VX mark: a V set inside an X. */
-export function Mark({ className, title }: { className?: string; title?: string }) {
+export function Mark({ className, title, ref }: { className?: string; title?: string; ref?: React.Ref<SVGSVGElement> }) {
   return (
-    <svg className={className} viewBox="0 0 64 64" role={title ? 'img' : undefined} aria-label={title} aria-hidden={title ? undefined : true} fill="none" stroke="currentColor" strokeLinecap="square" strokeLinejoin="miter">
+    <svg ref={ref} className={className} viewBox="0 0 64 64" role={title ? 'img' : undefined} aria-label={title} aria-hidden={title ? undefined : true} fill="none" stroke="currentColor" strokeLinecap="square" strokeLinejoin="miter">
       <path d="M10 10 L54 54 M54 10 L10 54" strokeWidth="3" />
       <path d="M21 10 L32 23 L43 10" strokeWidth="3" />
     </svg>
@@ -65,7 +68,7 @@ export function Mark({ className, title }: { className?: string; title?: string 
  * Centre text that flows around the VX mark: the text is split into two
  * halves at a word break and set either side of the mark.
  */
-export function AroundMark({ text, as: Tag = 'p', className }: { text: string; as?: 'p' | 'h1' | 'h2'; className?: string }) {
+export function AroundMark({ text, as: Tag = 'p', className, markRef }: { text: string; as?: 'p' | 'h1' | 'h2'; className?: string; markRef?: React.Ref<HTMLSpanElement> }) {
   const words = text.split(' ');
   // split where the character count is closest to half, so both sides of the mark carry equal weight
   let mid = 1, best = Infinity, acc = 0;
@@ -73,16 +76,25 @@ export function AroundMark({ text, as: Tag = 'p', className }: { text: string; a
   return (
     <Tag className={`around ${className ?? ''}`}>
       <Type as="span" className="around__l">{words.slice(0, mid).join(' ')}</Type>
-      <Mark className="around__mark" />
+      {markRef ? <span ref={markRef} className="around__mark around__slot" aria-hidden="true" /> : <Mark className="around__mark" />}
       <Type as="span" className="around__r" delay={120}>{words.slice(mid).join(' ')}</Type>
     </Tag>
   );
 }
 
 /** Thin solid grid lines with + markers and circle markers. */
-export function HudGrid({ circles = true }: { circles?: boolean }) {
+export function HudGrid({ circles = true, spot = false }: { circles?: boolean; spot?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useSpotlight(ref, spot);
+  const lines = (
+    <>
+      {[25, 50, 75].map((x) => <span key={x} className="hud-grid__v" style={{ left: `${x}%` }} />)}
+      {[33.333, 66.666].map((y) => <span key={y} className="hud-grid__h" style={{ top: `${y}%` }} />)}
+    </>
+  );
   return (
-    <div className="hud-grid" aria-hidden="true">
+    <div ref={ref} className={`hud-grid${spot ? ' hud-grid--spot' : ''}`} aria-hidden="true">
+      {spot && <div className="hud-grid__lit">{lines}</div>}
       {[25, 50, 75].map((x) => <span key={x} className="hud-grid__v" style={{ left: `${x}%` }} />)}
       {[33.333, 66.666].map((y) => <span key={y} className="hud-grid__h" style={{ top: `${y}%` }} />)}
       {[25, 75].map((x) => [33.333, 66.666].map((y) => <span key={`${x}-${y}`} className="hud-plus" style={{ left: `${x}%`, top: `${y}%` }} />))}
@@ -191,9 +203,12 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
       const k = m.vw / data.w;
       const updateConf = now > nextConf;
       if (updateConf) nextConf = now + 1400;
-      ctx.font = '11px RX100, ui-monospace, monospace';
+      ctx.font = '500 12px RX100, ui-monospace, monospace';
       ctx.textBaseline = 'top';
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1.5;
+      // soft glow on every line and label
+      ctx.shadowColor = 'rgba(255,255,255,0.85)';
+      ctx.shadowBlur = 9;
 
       data.tracks.forEach((t, i) => {
         const f = t.f[Math.min(frame, t.f.length - 1)];
@@ -214,10 +229,11 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
         const alpha = Math.min(1, Math.max(0, b.a * 1.6 - i * 0.25));
         if (alpha <= 0) return;
 
-        ctx.strokeStyle = `rgba(236,236,234,${0.75 * alpha})`;
+        ctx.strokeStyle = `rgba(255,255,255,${0.95 * alpha})`;
         ctx.strokeRect(Math.round(b.x) + 0.5, Math.round(b.y) + 0.5, Math.round(b.w), Math.round(b.h));
-        const L = 7;
-        ctx.strokeStyle = `rgba(236,236,234,${alpha})`;
+        const L = 9;
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
         ctx.beginPath();
         for (const [x, y] of [[b.x, b.y], [b.x + b.w, b.y], [b.x, b.y + b.h], [b.x + b.w, b.y + b.h]]) {
           ctx.moveTo(x - L, y);
@@ -226,14 +242,15 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
           ctx.lineTo(x, y + L);
         }
         ctx.stroke();
-        ctx.fillStyle = `rgba(236,236,234,${alpha})`;
+        ctx.lineWidth = 1.5;
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
         ctx.fillText(`${t.label} ${b.conf.toFixed(2)}`, b.x + 4, b.y - 15);
-        ctx.fillStyle = `rgba(236,236,234,${0.6 * alpha})`;
+        ctx.fillStyle = `rgba(255,255,255,${0.75 * alpha})`;
         ctx.fillText(t.sub, b.x + 4, b.y + b.h + 5);
         // a thin leader line from each box to the next one
         const n = shown[i + 1];
         if (n && alpha > 0.2) {
-          ctx.strokeStyle = `rgba(236,236,234,${0.25 * alpha})`;
+          ctx.strokeStyle = `rgba(255,255,255,${0.45 * alpha})`;
           ctx.beginPath();
           ctx.moveTo(b.x + b.w, b.y + b.h / 2);
           ctx.lineTo(n.x, n.y + n.h / 2);
@@ -260,4 +277,46 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
       <div className="gvideo__grain" />
     </div>
   );
+}
+
+/**
+ * Lights the grid lines around the cursor: a second, brighter copy of the lines
+ * is masked by a circle that follows the pointer with easing and grows in/out.
+ */
+function useSpotlight(ref: React.RefObject<HTMLDivElement | null>, on: boolean) {
+  useEffect(() => {
+    const grid = ref.current;
+    const host = grid?.parentElement;
+    if (!on || !grid || !host || reduced() || !matchMedia('(hover: hover)').matches) return;
+    const cur = { x: -999, y: -999, r: 0 };
+    const goal = { x: -999, y: -999, r: 0 };
+    let raf = 0;
+    const loop = () => {
+      cur.x += (goal.x - cur.x) * 0.12;
+      cur.y += (goal.y - cur.y) * 0.12;
+      cur.r += (goal.r - cur.r) * 0.08;
+      grid.style.setProperty('--mx', `${cur.x.toFixed(1)}px`);
+      grid.style.setProperty('--my', `${cur.y.toFixed(1)}px`);
+      grid.style.setProperty('--mr', `${cur.r.toFixed(1)}px`);
+      const still = Math.abs(goal.x - cur.x) + Math.abs(goal.y - cur.y) + Math.abs(goal.r - cur.r) < 0.5;
+      raf = still ? 0 : requestAnimationFrame(loop);
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(loop); };
+    const move = (e: PointerEvent) => {
+      const r = host.getBoundingClientRect();
+      goal.x = e.clientX - r.left;
+      goal.y = e.clientY - r.top;
+      if (cur.r < 1) { cur.x = goal.x; cur.y = goal.y; } // appear where the pointer is, not fly in
+      goal.r = 240;
+      kick();
+    };
+    const leave = () => { goal.r = 0; kick(); };
+    host.addEventListener('pointermove', move);
+    host.addEventListener('pointerleave', leave);
+    return () => {
+      cancelAnimationFrame(raf);
+      host.removeEventListener('pointermove', move);
+      host.removeEventListener('pointerleave', leave);
+    };
+  }, [ref, on]);
 }

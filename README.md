@@ -29,6 +29,7 @@
 - **Product page** with sizes, stock and a size guide.
 - **Bag and checkout** with custom forms. Nothing is really paid.
 - **Account** with sign up, sign in, "remember me" and password change.
+- **Drop page** (`/new`) with a countdown to the next drop, who made it and a blurred first look.
 - **Help page** for tracking orders and reporting delivery problems.
 - **About us** and pages for creators, artists and designers who want to work with us.
 - **Newsletter popup** with a code for the first order.
@@ -50,6 +51,7 @@
 | ![Shop](docs/screens/10-shop.jpg) | ![Product](docs/screens/12-product.jpg) |
 | ![Checkout](docs/screens/15-checkout.jpg) | ![Account](docs/screens/20-account.jpg) |
 | ![About us](docs/screens/30-about.jpg) | ![For artists](docs/screens/31-collab.jpg) |
+| ![Drop 07](docs/screens/40-drop.jpg) | ![Drop on mobile](docs/screens/m-new.jpg) |
 
 | | | | |
 |:---:|:---:|:---:|:---:|

@@ -4,30 +4,36 @@ import { useStore } from '../lib/store';
 import { read, write } from '../lib/storage';
 import { getMeta, SITE_URL, SITE_NAME, canonical } from '../seo';
 import { PHOTOGRAPHER } from '../data/looks';
-import { Mark } from './Hud';
 import { email as validEmail } from '../lib/validate';
 
-const GLITCH = ['SYS.STATUS // ONLINE', 'NODE PRG-01 // SIGNAL 0.97', 'CURFEW 23:00 // ENFORCED', 'VAULT DOOR // SEALED', 'DROP 08 // LOADING', 'WEATHER // ACID RAIN 40%', 'UPLINK // ENCRYPTED', 'LAST TRAM // 00:41'];
 
-/** One line of system text that glitches into the next every few seconds. */
-function GlitchLine() {
-  const [i, setI] = useState(0);
-  const [hot, setHot] = useState(false);
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const t = setInterval(() => {
-      setHot(true);
-      setTimeout(() => {
-        setI((x) => (x + 1) % GLITCH.length);
-        setHot(false);
-      }, 260);
-    }, 3200);
-    return () => clearInterval(t);
-  }, []);
+
+function FooterNews() {
+  const [mail, setMail] = useState('');
+  const [err, setErr] = useState('');
+  const [done, setDone] = useState(false);
+  useEffect(() => setDone(!!read<string>('vault-list', '')), []);
+  if (done) return <p className="fnews__done">You are on the list. Next letter comes with the next drop.</p>;
   return (
-    <p className={`gline mono${hot ? ' is-hot' : ''}`} data-text={GLITCH[i]} aria-hidden="true">
-      {GLITCH[i]}
-    </p>
+    <form
+      className="fnews__form"
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        const v = validEmail(mail);
+        if (v) return setErr(v);
+        write('vault-list', mail.trim().toLowerCase());
+        write('promo-seen', true);
+        setDone(true);
+      }}
+    >
+      <label htmlFor="fnews-mail" className="sr-only">Email</label>
+      <input id="fnews-mail" type="email" autoComplete="email" inputMode="email" maxLength={120} placeholder="Email address" value={mail}
+        aria-invalid={!!err} aria-describedby={err ? 'fnews-err' : undefined}
+        onChange={(e) => { setMail(e.target.value); setErr(''); }} />
+      <button type="submit">Subscribe</button>
+      {err && <p id="fnews-err" className="fnews__err" role="alert">{err}</p>}
+    </form>
   );
 }
 
@@ -36,19 +42,20 @@ export function Footer() {
   return (
     <footer className="footer" data-theme="dark">
       <div className="footer__top">
-        <Link to="/" className="footer__brand" aria-label="VAULTX home">
-          <Mark className="footer__mark" />
-          <span>VAULTX</span>
-        </Link>
-        <div className="footer__sys">
-          <GlitchLine />
-          <p className="mono muted">50.0755 N / 14.4378 E / Prague</p>
+        <div className="footer__about">
+          <p className="footer__say">Heavy clothes for the after-hours city.</p>
+          <p className="footer__lead">VAULTX is a small studio in Prague. We cut in short runs, dye everything black or grey and do not restock. When a piece is gone, it is gone.</p>
+        </div>
+        <div className="fnews">
+          <p className="footer__h">Newsletter</p>
+          <p className="fnews__text">One letter a month. New drops first, nothing else.</p>
+          <FooterNews />
         </div>
       </div>
       <div className="footer__grid">
         <nav aria-label="Shop" className="footer__col">
           <p className="footer__h">Shop</p>
-          <Link to="/shop?new=1">New arrivals</Link>
+          <Link to="/new">New arrivals</Link>
           <Link to="/shop">All products</Link>
           <Link to="/shop?c=hoodies">Hoodies</Link>
           <Link to="/shop?c=knitwear">Knitwear</Link>
@@ -80,15 +87,21 @@ export function Footer() {
           <button type="button" onClick={() => setBagOpen(true)}>Bag</button>
           <Link to="/checkout">Checkout</Link>
         </nav>
-        <nav aria-label="Legal" className="footer__col">
-          <p className="footer__h">Legal</p>
+        <div className="footer__col">
+          <p className="footer__h">Studio hours</p>
+          <p>Monday to Friday</p>
+          <p>9:00 to 18:00 CET</p>
+          <p>Orders leave Prague within 24 h.</p>
+          <p>Free tracked shipping over €200.</p>
+        </div>
+      </div>
+      <div className="footer__base mono">
+        <p>© {new Date().getFullYear()} VAULTX / Prague. Concept store, no real payments.</p>
+        <nav aria-label="Legal" className="footer__legal">
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms of sale</Link>
           <Link to="/terms#returns">Returns policy</Link>
         </nav>
-      </div>
-      <div className="footer__base mono">
-        <p>© {new Date().getFullYear()} VAULTX / Prague. Concept store, no real payments.</p>
         <p>
           Photos:{' '}
           <a href={PHOTOGRAPHER.url} target="_blank" rel="noopener noreferrer">{PHOTOGRAPHER.name}</a>,{' '}
