@@ -68,7 +68,7 @@ export function Mark({ className, title, ref }: { className?: string; title?: st
  * Centre text that flows around the VX mark: the text is split into two
  * halves at a word break and set either side of the mark.
  */
-export function AroundMark({ text, as: Tag = 'p', className, markRef }: { text: string; as?: 'p' | 'h1' | 'h2'; className?: string; markRef?: React.Ref<HTMLSpanElement> }) {
+export function AroundMark({ text, as: Tag = 'p', className, markRef, center }: { text: string; as?: 'p' | 'h1' | 'h2'; className?: string; markRef?: React.Ref<HTMLSpanElement>; center?: React.ReactNode }) {
   const words = text.split(' ');
   // split where the character count is closest to half, so both sides of the mark carry equal weight
   let mid = 1, best = Infinity, acc = 0;
@@ -76,7 +76,7 @@ export function AroundMark({ text, as: Tag = 'p', className, markRef }: { text: 
   return (
     <Tag className={`around ${className ?? ''}`}>
       <Type as="span" className="around__l">{words.slice(0, mid).join(' ')}</Type>
-      {markRef ? <span ref={markRef} className="around__mark around__slot" aria-hidden="true" /> : <Mark className="around__mark" />}
+      {center ?? (markRef ? <span ref={markRef} className="around__mark around__slot" aria-hidden="true" /> : <Mark className="around__mark" />)}
       <Type as="span" className="around__r" delay={120}>{words.slice(mid).join(' ')}</Type>
     </Tag>
   );
@@ -120,23 +120,28 @@ interface TrackData {
  * - tracker boxes on the person's clothes (hat, pockets, sleeve), played back
  *   from boxes measured offline with OpenCV (scripts/track-video.py) and eased
  *   slowly towards each new position
- * - a short glitch burst every few seconds (slices of the frame shifted sideways)
+ * - a motion-blur copy of the video underneath (frames blended over the last
+ *   ones, so moving parts leave a soft trail)
  * Paused off screen, in background tabs, and for reduced motion.
  */
 export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: string; srcSmall?: string }) {
   const video = useRef<HTMLVideoElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const trailRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const v = video.current;
     const c = canvas.current;
-    if (!v || !c) return;
+    const tc = trailRef.current;
+    if (!v || !c || !tc) return;
     if (reduced()) {
       v.pause();
       return;
     }
     v.play().catch(() => {});
     const ctx = c.getContext('2d')!;
+    const tctx = tc.getContext('2d', { alpha: false })!;
+    let fresh = true; // first frame after a resize is drawn solid
     let data: TrackData | null = null;
     fetch(assetUrl('video/tracks.json'))
       .then((r) => r.json())
@@ -146,8 +151,6 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
     const shown: { x: number; y: number; w: number; h: number; a: number; conf: number }[] = [];
     let visible = true;
     let raf = 0;
-    let glitchUntil = 0;
-    let nextGlitch = performance.now() + 4000;
     let nextConf = 0;
 
     const io = new IntersectionObserver(([e]) => {
@@ -162,6 +165,11 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
       c.width = c.clientWidth * dpr;
       c.height = c.clientHeight * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // the motion-blur layer does not need full resolution
+      tc.width = Math.round(c.clientWidth * 0.75);
+      tc.height = Math.round(c.clientHeight * 0.75);
+      tctx.setTransform(0.75, 0, 0, 0.75, 0, 0);
+      fresh = true;
     };
     resize();
     window.addEventListener('resize', resize);
@@ -184,20 +192,11 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
       ctx.clearRect(0, 0, W, H);
       const m = cover();
 
-      if (now > nextGlitch) {
-        glitchUntil = now + 140 + Math.random() * 180;
-        nextGlitch = now + 6000 + Math.random() * 6000;
-      }
-      if (now < glitchUntil) {
-        const slices = 4 + ((Math.random() * 5) | 0);
-        for (let i = 0; i < slices; i++) {
-          const sy = Math.random() * m.vh;
-          const sh = 4 + Math.random() * m.vh * 0.05;
-          const shift = (Math.random() - 0.5) * 60;
-          ctx.drawImage(v, 0, sy, m.vw, sh, m.ox + shift, m.oy + sy * m.s, m.vw * m.s, sh * m.s);
-        }
-      }
-
+      // Motion blur: each new frame is laid over the previous ones at low
+      // opacity, so whatever moves leaves a soft trail and still parts stay sharp.
+      tctx.globalAlpha = fresh ? 1 : 0.2;
+      tctx.drawImage(v, m.ox, m.oy, m.vw * m.s, m.vh * m.s);
+      if (fresh) { fresh = false; tc.classList.add('is-on'); }
       if (!data) return;
       const frame = Math.floor(v.currentTime * data.fps);
       const k = m.vw / data.w;
@@ -273,6 +272,7 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
         {srcSmall && <source src={srcSmall} type="video/mp4" media="(max-width: 899px)" />}
         <source src={src} type="video/mp4" />
       </video>
+      <canvas ref={trailRef} className="gvideo__trail" />
       <canvas ref={canvas} className="gvideo__fx" />
       <div className="gvideo__grain" />
     </div>

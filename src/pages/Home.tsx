@@ -6,6 +6,7 @@ import { GlitchVideo, HudGrid, Type, AroundMark, Mark } from '../components/Hud'
 import { Img } from '../components/Img';
 import { assetUrl } from '../lib/format';
 import { useReveal } from '../lib/hooks';
+import { HeroBrand } from '../components/HeroBrand';
 
 function Clock() {
   const [t, setT] = useState('--:--:--');
@@ -70,6 +71,7 @@ export default function Home() {
   const mark = useRef<SVGSVGElement>(null);
   const bold = useRef<HTMLParagraphElement>(null);
   useTravellingMark(band, slot, mark, bold);
+  const brand = useRef<HTMLSpanElement>(null);
 
   return (
     <>
@@ -78,14 +80,15 @@ export default function Home() {
         <HudGrid spot />
         <div className="hud hero__hud">
           <p className="hud__t hud--tl mono"><Type>{'The city\nnever sleeps'}</Type><span className="hud__dot" /></p>
-          <AroundMark as="h1" className="hud__t hud--tc mono hud__center" text="Clothing for the after-hours city. Heavy, quiet, black. Cut in Prague for the ones who stay out." />
+          <AroundMark as="h1" center={<span className="around__year"><span aria-hidden="true">©</span><span className="sr-only">Copyright</span> 2026</span>} className="hud__t hud--tc mono hud__center" text="Clothing for the after-hours city. Heavy, quiet, black. Cut in Prague for the ones who stay out." />
           <p className="hud__t hud--tr mono"><Type delay={200}>{'Drop 07\nCurfew'}</Type></p>
           <p className="hud__t hud--ml mono"><Type delay={400}>{'Machine & human\nTRK 0.92'}</Type></p>
-          <p className="hud__pill mono">(C) 2026</p>
+          <span ref={brand} className="hero__brand-slot" aria-hidden="true">VAULTX</span>
           <p className="hud__t hud--mr mono"><Type delay={500}>{'Heavy cloth\n480 to 620 gsm'}</Type></p>
           <Link to="/new" className="hud--bl hud__cta">Shop new arrivals</Link>
           <p className="hud__t hud--bc mono hud__big"><Clock /> / 50.0755 N 14.4378 E</p>
         </div>
+        <HeroBrand slot={brand} />
       </section>
 
       <nav className="cats" aria-label="Categories" data-theme="light">
@@ -119,7 +122,7 @@ export default function Home() {
           <AroundMark as="h2" markRef={slot} className="hud__t hud--tc mono hud__center" text="In the grey of the city we wear the night as a uniform. Cut close, built heavy, made to outlast the trend." />
           <p className="hud__t hud--tr mono"><Type delay={200}>{'Delicate lines\nwool / nylon'}</Type></p>
           <p className="hud__t hud--ml mono"><Type delay={350}>{'Machine & human\nAI 0.98'}</Type></p>
-          <p className="hud__pill mono">VAULTX</p>
+          <a href="#outer-title" className="band__shop" onClick={(e) => { e.preventDefault(); document.getElementById('outer-title')?.closest('section')?.scrollIntoView({ behavior: 'smooth' }); }}>Our shop <span aria-hidden="true">↓</span></a>
           <p className="hud__t hud--mr mono"><Type delay={450}>{'Controlled\ncurves'}</Type></p>
           <Link to="/about" className="hud--bl hud__cta">About us</Link>
           <p ref={bold} className="hud__t hud--bc mono hud__big hud__one">Bold strokes / soft light</p>

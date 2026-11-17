@@ -144,7 +144,8 @@ export function Nav() {
         setCompact(y > 24);
         setSolid(home ? y > window.innerHeight - 80 : true);
         if (y < 200) setHidden(false);
-        else if (y - last > 8) setHidden(true);
+        // landing page: stay in view through the hero, so the big VAULTX can dock into it
+        else if (y - last > 8 && !(home && y < window.innerHeight * 1.15)) setHidden(true);
         else if (last - y > 8) setHidden(false);
         last = y;
         ticking = false;
@@ -195,7 +196,7 @@ export function Nav() {
             ))}
           </nav>
         </div>
-        <Link to="/" className="nav__logo" aria-label="VAULTX home">
+        <Link to="/" className="nav__logo" aria-label="VAULTX home" aria-hidden={loc.pathname === '/' || undefined} tabIndex={loc.pathname === '/' ? -1 : undefined} style={loc.pathname === '/' ? { visibility: 'hidden' } : undefined}>
           <span>VAULTX</span>
         </Link>
         <div className="nav__right">
