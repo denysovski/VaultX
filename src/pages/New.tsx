@@ -11,6 +11,30 @@ import { email as validEmail } from '../lib/validate';
 const DROP = Date.UTC(2026, 11, 4, 19, 0, 0);
 const TEASE = ['signal-zip-hoodie', 'decay-knit', 'fray-knit'].map((s) => PRODUCTS.find((p) => p.slug === s)!).filter(Boolean);
 
+/**
+ * The piece's name, made secret: a few letters swapped for a big star and one
+ * word under a black bar. Fixed per name (no randomness), so the server and
+ * the browser render the same thing.
+ */
+function Secret({ name }: { name: string }) {
+  const words = name.toUpperCase().split(' ');
+  const hide = words.length > 1 ? words.length - 1 : -1; // the last word goes under a bar
+  let h = [...name].reduce((a, c) => (a * 33 + c.charCodeAt(0)) >>> 0, 5);
+  return (
+    <p className="drop__name" aria-label="Name hidden until the drop">
+      {words.map((w, i) => (
+        <span key={i}>
+          {i > 0 && ' '}
+          {i === hide ? <span className="bar">{w}</span> : [...w].map((ch, j) => {
+            h = (h * 1103515245 + 12345) >>> 0;
+            return j > 0 && h % 3 === 0 ? <span key={j} className="x" aria-hidden="true">✱</span> : <span key={j} aria-hidden="true">{ch}</span>;
+          })}
+        </span>
+      ))}
+    </p>
+  );
+}
+
 function Countdown() {
   const [now, setNow] = useState<number | null>(null); // null until mounted, so the prerender stays stable
   useEffect(() => {
@@ -92,6 +116,7 @@ export default function New() {
           {TEASE.map((p) => (
             <li key={p.slug} className="drop__piece">
               <ProductImg src={p.image} alt="A piece from Drop 07, shown blurred until the release" />
+              <Secret name={p.name} />
               <span className="drop__veil mono" aria-hidden="true">Classified</span>
             </li>
           ))}
