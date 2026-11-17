@@ -876,7 +876,7 @@ legend { padding: 0; }
 .card--fx .card__link:hover .card__term, .card--fx .card__link:focus-visible .card__term { opacity: 1; filter: blur(0.6px); }
 .card--fx .card__link:hover .card__term span, .card--fx .card__link:focus-visible .card__term span { clip-path: inset(0); }
 .card--fx .card__frame > .pimg { z-index: 1; }
-.card--fx .card__link:hover .pimg.is-loaded, .card--fx .card__link:focus-visible .pimg.is-loaded { filter: grayscale(1) brightness(var(--lift)) contrast(1.32); }
+.card--fx .card__link:hover .pimg.is-loaded, .card--fx .card__link:focus-visible .pimg.is-loaded { filter: grayscale(1) brightness(var(--lift)) contrast(1.16); }
 .card--fx .card__meta { justify-content: center; gap: 50px; padding-left: 8px; padding-right: 8px; clip-path: inset(0 0 100% 0); opacity: 0; transform: translateY(-14px); transition: clip-path 520ms var(--ease-out), opacity 360ms, transform 520ms var(--ease-out); }
 .card--fx .card__link:hover .card__meta, .card--fx .card__link:focus-visible .card__meta { clip-path: inset(0 0 -20% 0); opacity: 1; transform: none; }
 @media (hover: none) { .card--fx .card__meta { clip-path: none; opacity: 1; transform: none; } }
