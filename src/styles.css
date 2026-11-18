@@ -958,6 +958,9 @@ legend { padding: 0; }
 
 /* HUD text entrances other than typing */
 .rv { display: inline-block; white-space: pre-line; }
+.rv--fade { opacity: 0; transition: opacity 1000ms var(--ease-out); }
+.rv--left { opacity: 0; transform: translateX(-40px); transition: opacity 900ms var(--ease-out), transform 1100ms var(--ease-out); }
+.rv--right { opacity: 0; transform: translateX(40px); transition: opacity 900ms var(--ease-out), transform 1100ms var(--ease-out); }
 .rv--rise { opacity: 0; transform: translateY(14px); transition: opacity 900ms var(--ease-out), transform 1100ms var(--ease-out); }
 .rv--blur { opacity: 0; filter: blur(10px); transition: opacity 1000ms var(--ease-out), filter 1200ms var(--ease-out); }
 .rv--wipe { clip-path: inset(0 100% 0 0); transition: clip-path 1100ms var(--ease-out); }

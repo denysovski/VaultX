@@ -8,57 +8,16 @@ const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefe
  * The full text is in the DOM from the start (for screen readers and SEO);
  * only the visible copy is animated.
  */
-export function Type({ children, as: Tag = 'span', className, delay = 0, speed = 14 }: { children: string; as?: 'span' | 'p' | 'h1' | 'h2'; className?: string; delay?: number; speed?: number }) {
-  const ref = useRef<HTMLElement>(null);
-  const [n, setN] = useState(-1); // -1: not started (text hidden but space kept)
-  // half a second longer per line than plain char-by-char, so the text reads like it is being typed
-  const step = speed + 500 / Math.max(1, children.length);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (reduced()) {
-      setN(children.length);
-      return;
-    }
-    let t = 0;
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      io.disconnect();
-      const start = performance.now() + delay;
-      const tick = (now: number) => {
-        const k = Math.max(0, Math.floor((now - start) / step));
-        setN(Math.min(children.length, k));
-        if (k < children.length) t = requestAnimationFrame(tick);
-      };
-      t = requestAnimationFrame(tick);
-    });
-    io.observe(el);
-    return () => {
-      io.disconnect();
-      cancelAnimationFrame(t);
-    };
-  }, [children, delay, step]);
-  const k = Math.max(0, n);
-  // One layer: the typed part, the caret, then the rest of the text kept in the
-  // layout but invisible. Lines therefore break in their final places from the
-  // first letter instead of running long and jumping at the end.
-  return (
-    <Tag ref={ref as never} className={`type ${className ?? ''}`}>
-      <span className="sr-only">{children}</span>
-      <span aria-hidden="true" className="type__text">
-        {children.slice(0, k)}
-        {n >= 0 && n < children.length && <span className="type__caret" />}
-        <span className="type__rest">{children.slice(k)}</span>
-      </span>
-    </Tag>
-  );
+export function Type({ children, as: Tag = 'span', className, delay = 0, kind = 'fade' }: { children: string; as?: 'span' | 'p' | 'h1' | 'h2'; className?: string; delay?: number; speed?: number; kind?: 'fade' | 'rise' | 'left' | 'right' | 'blur' }) {
+  // Was a typewriter; now a plain entrance (fade, or a short move in).
+  return <Reveal as={Tag === 'span' ? 'span' : 'p'} kind={kind} delay={delay} className={className}>{children}</Reveal>;
 }
 
 /**
  * Non-typing entrance for HUD text: fades up, sharpens from a blur, or wipes
  * in from the left once it scrolls into view, after its own delay.
  */
-export function Reveal({ children, kind = 'rise', delay = 0, className, as: Tag = 'span' }: { children: string; kind?: 'rise' | 'blur' | 'wipe'; delay?: number; className?: string; as?: 'span' | 'p' }) {
+export function Reveal({ children, kind = 'rise', delay = 0, className, as: Tag = 'span' }: { children: string; kind?: 'fade' | 'rise' | 'left' | 'right' | 'blur' | 'wipe'; delay?: number; className?: string; as?: 'span' | 'p' }) {
   const ref = useRef<HTMLElement>(null);
   const [on, setOn] = useState(false);
   useEffect(() => {
@@ -101,9 +60,9 @@ export function AroundMark({ text, as: Tag = 'p', className, markRef, center, an
   words.forEach((w, i) => { acc += w.length + 1; const d = Math.abs(acc - text.length / 2); if (d < best && i < words.length - 1) { best = d; mid = i + 1; } });
   return (
     <Tag className={`around ${className ?? ''}`}>
-      {anim === 'type' ? <Type as="span" className="around__l" delay={delay}>{words.slice(0, mid).join(' ')}</Type> : <Reveal kind="blur" className="around__l" delay={delay}>{words.slice(0, mid).join(' ')}</Reveal>}
+      <Reveal kind={anim === 'type' ? 'left' : 'blur'} className="around__l" delay={delay}>{words.slice(0, mid).join(' ')}</Reveal>
       {center ?? (markRef ? <span ref={markRef} className="around__mark around__slot" aria-hidden="true" /> : <Mark className="around__mark" />)}
-      {anim === 'type' ? <Type as="span" className="around__r" delay={delay + 700}>{words.slice(mid).join(' ')}</Type> : <Reveal kind="blur" className="around__r" delay={delay + 350}>{words.slice(mid).join(' ')}</Reveal>}
+      <Reveal kind={anim === 'type' ? 'right' : 'blur'} className="around__r" delay={delay + 200}>{words.slice(mid).join(' ')}</Reveal>
     </Tag>
   );
 }
