@@ -18,7 +18,7 @@
     var bar = el.querySelector('.vxb__bar i');
     var lines = el.querySelectorAll('.vxb__log li');
     var t0 = performance.now();
-    var DUR = 2300;
+    var DUR = 1700; // whole thing: fade in, count, fade out = 2.5 s
     var done = false;
     function finish() {
       if (done) return;
@@ -27,7 +27,7 @@
       el.classList.add('is-out');
       html.classList.remove('vx-booting');
       window.dispatchEvent(new Event('vx:booted'));
-      setTimeout(function () { el.remove(); html.classList.add('vx-booted'); }, 900);
+      setTimeout(function () { el.remove(); html.classList.add('vx-booted'); }, 650);
     }
     function tick(now) {
       var p = Math.min(1, (now - t0) / DUR);
@@ -37,7 +37,7 @@
       bar.style.transform = 'scaleX(' + eased + ')';
       for (var i = 0; i < lines.length; i++) if (p > (i + 0.4) / (lines.length + 0.6)) lines[i].classList.add('on');
       if (p > 0.55) el.classList.add('is-locked');
-      if (p < 1) requestAnimationFrame(tick); else setTimeout(finish, 350);
+      if (p < 1) requestAnimationFrame(tick); else setTimeout(finish, 150);
     }
     requestAnimationFrame(tick);
     el.addEventListener('click', finish);
