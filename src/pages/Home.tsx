@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { PRODUCTS, CATEGORIES } from '../data/products';
 import { ProductCard } from '../components/ProductCard';
-import { GlitchVideo, HudGrid, Type, AroundMark, Mark } from '../components/Hud';
+import { GlitchVideo, HudGrid, Type, Reveal, AroundMark, Mark } from '../components/Hud';
 import { Img } from '../components/Img';
 import { assetUrl } from '../lib/format';
 import { useReveal } from '../lib/hooks';
@@ -79,12 +79,12 @@ export default function Home() {
         <GlitchVideo src={assetUrl('video/hero.mp4')} srcSmall={assetUrl('video/hero-960.mp4')} poster={assetUrl('video/hero-poster.jpg')} />
         <HudGrid spot />
         <div className="hud hero__hud">
-          <p className="hud__t hud--tl mono"><Type>{'The city\nnever sleeps'}</Type><span className="hud__dot" /></p>
-          <AroundMark as="h1" center={<span className="around__year"><span aria-hidden="true">©</span><span className="sr-only">Copyright</span> 2026</span>} className="hud__t hud--tc mono hud__center" text="Clothing for the after-hours city. Heavy, quiet, black. Cut in Prague for the ones who stay out." />
-          <p className="hud__t hud--tr mono"><Type delay={200}>{'Drop 07\nCurfew'}</Type></p>
-          <p className="hud__t hud--ml mono"><Type delay={400}>{'Machine & human\nTRK 0.92'}</Type></p>
+          <p className="hud__t hud--tl mono"><Type delay={300}>{'The city\nnever sleeps'}</Type><span className="hud__dot" /></p>
+          <AroundMark as="h1" delay={900} center={<span className="around__year"><span aria-hidden="true">©</span><span className="sr-only">Copyright</span> 2026</span>} className="hud__t hud--tc mono hud__center" text="Clothing for the after-hours city. Heavy, quiet, black. Cut in Prague for the ones who stay out." />
+          <p className="hud__t hud--tr mono"><Reveal kind="wipe" delay={500}>{'Drop 07\nCurfew'}</Reveal></p>
+          <p className="hud__t hud--ml mono"><Reveal kind="rise" delay={1500}>{'Machine & human\nTRK 0.92'}</Reveal></p>
           <span ref={brand} className="hero__brand-slot" aria-hidden="true">VAULTX</span>
-          <p className="hud__t hud--mr mono"><Type delay={500}>{'Heavy cloth\n480 to 620 gsm'}</Type></p>
+          <p className="hud__t hud--mr mono"><Type delay={2300}>{'Heavy cloth\n480 to 620 gsm'}</Type></p>
           <Link to="/new" className="hud--bl hud__cta">Shop new arrivals</Link>
           <p className="hud__t hud--bc mono hud__big"><Clock /> / 50.0755 N 14.4378 E</p>
         </div>
@@ -118,12 +118,12 @@ export default function Home() {
         <HudGrid spot />
         <Mark ref={mark} className="band__mark" />
         <div className="hud">
-          <p className="hud__t hud--tl mono"><Type>{'The future\nis coming'}</Type><span className="hud__dot" /></p>
-          <AroundMark as="h2" markRef={slot} className="hud__t hud--tc mono hud__center" text="In the grey of the city we wear the night as a uniform. Cut close, built heavy, made to outlast the trend." />
-          <p className="hud__t hud--tr mono"><Type delay={200}>{'Delicate lines\nwool / nylon'}</Type></p>
-          <p className="hud__t hud--ml mono"><Type delay={350}>{'Machine & human\nAI 0.98'}</Type></p>
+          <p className="hud__t hud--tl mono"><Type delay={200}>{'The future\nis coming'}</Type><span className="hud__dot" /></p>
+          <AroundMark as="h2" anim="blur" delay={600} markRef={slot} className="hud__t hud--tc mono hud__center" text="In the grey of the city we wear the night as a uniform. Cut close, built heavy, made to outlast the trend." />
+          <p className="hud__t hud--tr mono"><Reveal kind="rise" delay={1100}>{'Delicate lines\nwool / nylon'}</Reveal></p>
+          <p className="hud__t hud--ml mono"><Reveal kind="wipe" delay={1600}>{'Machine & human\nAI 0.98'}</Reveal></p>
           <a href="#outer-title" className="band__shop" onClick={(e) => { e.preventDefault(); document.getElementById('outer-title')?.closest('section')?.scrollIntoView({ behavior: 'smooth' }); }}>Our shop</a>
-          <p className="hud__t hud--mr mono"><Type delay={450}>{'Controlled\ncurves'}</Type></p>
+          <p className="hud__t hud--mr mono"><Type delay={2200}>{'Controlled\ncurves'}</Type></p>
           <Link to="/about" className="hud--bl hud__cta">About us</Link>
           <p ref={bold} className="hud__t hud--bc mono hud__big hud__one">Bold strokes / soft light</p>
           <p className="hud--br hud__big mono">

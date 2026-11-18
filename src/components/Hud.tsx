@@ -54,6 +54,32 @@ export function Type({ children, as: Tag = 'span', className, delay = 0, speed =
   );
 }
 
+/**
+ * Non-typing entrance for HUD text: fades up, sharpens from a blur, or wipes
+ * in from the left once it scrolls into view, after its own delay.
+ */
+export function Reveal({ children, kind = 'rise', delay = 0, className, as: Tag = 'span' }: { children: string; kind?: 'rise' | 'blur' | 'wipe'; delay?: number; className?: string; as?: 'span' | 'p' }) {
+  const ref = useRef<HTMLElement>(null);
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (reduced()) return setOn(true);
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      setOn(true);
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return (
+    <Tag ref={ref as never} className={`rv rv--${kind}${on ? ' is-in' : ''} ${className ?? ''}`} style={{ transitionDelay: `${delay}ms` }}>
+      {children}
+    </Tag>
+  );
+}
+
 /** The VX mark: a V set inside an X. */
 export function Mark({ className, title, ref }: { className?: string; title?: string; ref?: React.Ref<SVGSVGElement> }) {
   return (
@@ -68,16 +94,16 @@ export function Mark({ className, title, ref }: { className?: string; title?: st
  * Centre text that flows around the VX mark: the text is split into two
  * halves at a word break and set either side of the mark.
  */
-export function AroundMark({ text, as: Tag = 'p', className, markRef, center }: { text: string; as?: 'p' | 'h1' | 'h2'; className?: string; markRef?: React.Ref<HTMLSpanElement>; center?: React.ReactNode }) {
+export function AroundMark({ text, as: Tag = 'p', className, markRef, center, anim = 'type', delay = 0 }: { text: string; as?: 'p' | 'h1' | 'h2'; className?: string; markRef?: React.Ref<HTMLSpanElement>; center?: React.ReactNode; anim?: 'type' | 'blur'; delay?: number }) {
   const words = text.split(' ');
   // split where the character count is closest to half, so both sides of the mark carry equal weight
   let mid = 1, best = Infinity, acc = 0;
   words.forEach((w, i) => { acc += w.length + 1; const d = Math.abs(acc - text.length / 2); if (d < best && i < words.length - 1) { best = d; mid = i + 1; } });
   return (
     <Tag className={`around ${className ?? ''}`}>
-      <Type as="span" className="around__l">{words.slice(0, mid).join(' ')}</Type>
+      {anim === 'type' ? <Type as="span" className="around__l" delay={delay}>{words.slice(0, mid).join(' ')}</Type> : <Reveal kind="blur" className="around__l" delay={delay}>{words.slice(0, mid).join(' ')}</Reveal>}
       {center ?? (markRef ? <span ref={markRef} className="around__mark around__slot" aria-hidden="true" /> : <Mark className="around__mark" />)}
-      <Type as="span" className="around__r" delay={120}>{words.slice(mid).join(' ')}</Type>
+      {anim === 'type' ? <Type as="span" className="around__r" delay={delay + 700}>{words.slice(mid).join(' ')}</Type> : <Reveal kind="blur" className="around__r" delay={delay + 350}>{words.slice(mid).join(' ')}</Reveal>}
     </Tag>
   );
 }
