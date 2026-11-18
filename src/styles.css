@@ -1003,14 +1003,14 @@ legend { padding: 0; }
 
 /* ---------- first-visit boot screen (markup in index.html, logic in public/boot.js) ---------- */
 .vxb { display: none; }
-.vx-booting .vxb, .vxb.is-out { display: block; position: fixed; inset: 0; z-index: 200; background: #050505; color: #ececea; overflow: hidden; cursor: pointer;
+.vx-booting .vxb, .vxb.is-out { display: block; position: fixed; inset: 0; z-index: 200; background: #050505; color: #ececea; overflow: hidden;
   font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
 .vx-booted .vxb:not(.is-out) { display: none; }
 .vx-booting body { overflow: hidden; }
 .vxb > * { animation: vxb-in 400ms ease-out both; }
 @keyframes vxb-in { from { opacity: 0; } }
 .vxb.is-out { opacity: 0; transition: opacity 600ms ease-in-out; pointer-events: none; }
-.vxb.is-out .vxb__target { transform: translate(-50%, -50%) scale(1.04); transition: transform 600ms var(--ease-out); }
+.vxb.is-out .vxb__box, .vxb.is-out .vxb__log, .vxb.is-out .vxb__meter, .vxb.is-out .vxb__grid { opacity: 0; transition: opacity 400ms; }
 .vxb__grid i { position: absolute; background: rgb(236 236 234 / 0.07); }
 .vxb__grid i:nth-child(1) { left: 25%; top: 0; bottom: 0; width: 1px; }
 .vxb__grid i:nth-child(2) { left: 50%; top: 0; bottom: 0; width: 1px; }
@@ -1018,7 +1018,8 @@ legend { padding: 0; }
 .vxb__grid i:nth-child(4) { top: 33.333%; left: 0; right: 0; height: 1px; }
 .vxb__grid i:nth-child(5) { top: 66.666%; left: 0; right: 0; height: 1px; }
 .vxb__target { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
-.vxb__word { display: block; font-family: var(--f-sans); font-weight: 500; font-size: clamp(48px, 8vw, 120px); line-height: 1; letter-spacing: 0.02em; text-transform: none;
+/* same size and spot as the hero's big VAULTX, so it stays put when the screen fades */
+.vxb__word { display: block; white-space: nowrap; font-family: var(--f-sans); font-weight: 500; font-size: clamp(56px, 9vw, 150px); line-height: 1; letter-spacing: 0.02em; padding-left: 0.02em; text-transform: none; color: #ececea;
   opacity: 0.15; filter: blur(8px); transition: opacity 500ms, filter 500ms; }
 .vxb.is-locked .vxb__word { opacity: 1; filter: none; }
 /* the tracker box wanders, then snaps around the word */
@@ -1035,7 +1036,8 @@ legend { padding: 0; }
 .vxb__box::before, .vxb__box::after { content: ''; position: absolute; width: 14px; height: 14px; border: solid #fff; }
 .vxb__box::before { left: -5px; top: -5px; border-width: 2px 0 0 2px; }
 .vxb__box::after { right: -5px; bottom: -5px; border-width: 0 2px 2px 0; }
-.vxb__tag { position: absolute; left: 0; top: -20px; white-space: nowrap; transition: opacity 300ms; }
+.vxb__tag { position: absolute; left: 0; top: -20px; white-space: nowrap; transition: opacity 120ms; }
+.vxb.is-locked .vxb__tag--ok { transition-delay: 120ms; }
 .vxb__tag--ok { opacity: 0; }
 .vxb.is-locked .vxb__tag { opacity: 0; }
 .vxb.is-locked .vxb__tag--ok { opacity: 1; }
@@ -1046,4 +1048,4 @@ legend { padding: 0; }
 .vxb__pct { font-family: var(--f-sans); font-size: clamp(40px, 5vw, 72px); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .vxb__bar { width: min(220px, 40vw); height: 1px; background: rgb(236 236 234 / 0.2); }
 .vxb__bar i { display: block; height: 100%; background: #fff; transform: scaleX(0); transform-origin: left; }
-.vxb__skip { position: absolute; right: var(--g); top: var(--g); color: rgb(236 236 234 / 0.45); }
+@media (max-width: 899px) { .vxb__target { top: 26%; } .vxb__word { font-size: 64px; } }

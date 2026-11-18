@@ -40,8 +40,6 @@
       if (p < 1) requestAnimationFrame(tick); else setTimeout(finish, 150);
     }
     requestAnimationFrame(tick);
-    el.addEventListener('click', finish);
-    window.addEventListener('keydown', function (e) { if (e.key === 'Escape') finish(); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
