@@ -6,6 +6,7 @@ import { getMeta, SITE_URL, SITE_NAME, canonical } from '../seo';
 import { PHOTOGRAPHER } from '../data/looks';
 import { email as validEmail } from '../lib/validate';
 import { Signal } from './Signal';
+import { afterBoot } from './Hud';
 
 
 
@@ -100,8 +101,9 @@ export function PromoPopup() {
 
   useEffect(() => {
     if (read('promo-seen', false)) return;
-    const t = setTimeout(() => setShow(true), 2500);
-    return () => clearTimeout(t);
+    let t = 0;
+    const stop = afterBoot(() => { t = window.setTimeout(() => setShow(true), 2500); });
+    return () => { stop(); clearTimeout(t); };
   }, []);
 
   const close = () => {

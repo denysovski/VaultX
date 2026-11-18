@@ -14,9 +14,27 @@
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="preload" href="/fonts/rx100-400.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/expose-400.woff2" as="font" type="font/woff2" crossorigin />
+    <script src="/boot.js"></script>
     <!--app-head-->
   </head>
   <body>
+    <div id="vx-boot" class="vxb" aria-hidden="true">
+      <div class="vxb__grid"><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="vxb__target">
+        <span class="vxb__word">VAULTX</span>
+        <span class="vxb__box"><span class="vxb__tag">SUBJECT / LOCATING</span><span class="vxb__tag vxb__tag--ok">SUBJECT / LOCKED 0.98</span></span>
+      </div>
+      <ul class="vxb__log">
+        <li>&gt; init vaultx.core 7.4.1</li>
+        <li>&gt; mount /drop/07 ... ok</li>
+        <li>&gt; calibrate tracker ... ok</li>
+        <li>&gt; colour -&gt; grey 100%</li>
+        <li>&gt; signal prague 4 ms</li>
+        <li>&gt; enter</li>
+      </ul>
+      <div class="vxb__meter"><span class="vxb__pct">000</span><span class="vxb__bar"><i></i></span></div>
+      <p class="vxb__skip">Click to skip</p>
+    </div>
     <div id="root" data-path="<!--app-path-->"><!--app-html--></div>
     <noscript><p style="padding:16px">VAULTX needs JavaScript for the bag and checkout. Everything else is readable without it.</p></noscript>
     <script type="module" src="/src/main.tsx"></script>

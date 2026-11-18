@@ -1,6 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { assetUrl } from '../lib/format';
 
+/** Runs cb now, or once the first-visit boot screen (public/boot.js) has lifted. */
+export function afterBoot(cb: () => void): () => void {
+  if (typeof document === 'undefined' || !document.documentElement.classList.contains('vx-booting')) {
+    cb();
+    return () => {};
+  }
+  const go = () => cb();
+  window.addEventListener('vx:booted', go, { once: true });
+  return () => window.removeEventListener('vx:booted', go);
+}
+
 const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
@@ -29,8 +40,9 @@ export function Reveal({ children, kind = 'rise', delay = 0, className, as: Tag 
       io.disconnect();
       setOn(true);
     });
-    io.observe(el);
-    return () => io.disconnect();
+    // wait for the boot screen, so the entrance is not played behind it
+    const stop = afterBoot(() => io.observe(el));
+    return () => { stop(); io.disconnect(); };
   }, []);
   return (
     <Tag ref={ref as never} className={`rv rv--${kind}${on ? ' is-in' : ''} ${className ?? ''}`} style={{ transitionDelay: `${delay}ms` }}>
@@ -113,6 +125,7 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
   const video = useRef<HTMLVideoElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const trailRef = useRef<HTMLCanvasElement>(null);
+  const wrap = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const v = video.current;
@@ -137,6 +150,7 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
     let visible = true;
     let raf = 0;
     let nextConf = 0;
+    let lastT = 0;
 
     const io = new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
@@ -176,6 +190,13 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
       const H = c.clientHeight;
       ctx.clearRect(0, 0, W, H);
       const m = cover();
+      // Loop: fade to black over the last second, fade back in over the first.
+      // When the video jumps back to the start, the boxes start hidden again.
+      const t = v.currentTime, d = v.duration || 0;
+      if (t + 0.05 < lastT) { shown.length = 0; fresh = true; }
+      lastT = t;
+      const edge = d ? Math.max(0, Math.min(1, t / 1.1, (d - t) / 1.1)) : 1;
+      if (wrap.current) wrap.current.style.opacity = (edge * edge * (3 - 2 * edge)).toFixed(3);
 
       // Motion blur: each new frame is laid over the previous ones at low
       // opacity, so whatever moves leaves a soft trail and still parts stay sharp.
@@ -252,7 +273,7 @@ export function GlitchVideo({ src, poster, srcSmall }: { src: string; poster: st
   }, []);
 
   return (
-    <div className="gvideo" aria-hidden="true">
+    <div ref={wrap} className="gvideo" aria-hidden="true">
       <video ref={video} className="gvideo__video" muted loop playsInline autoPlay preload="auto" poster={poster}>
         {srcSmall && <source src={srcSmall} type="video/mp4" media="(max-width: 899px)" />}
         <source src={src} type="video/mp4" />
