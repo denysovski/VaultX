@@ -5,37 +5,9 @@ import { read, write } from '../lib/storage';
 import { getMeta, SITE_URL, SITE_NAME, canonical } from '../seo';
 import { PHOTOGRAPHER } from '../data/looks';
 import { email as validEmail } from '../lib/validate';
+import { Signal } from './Signal';
 
 
-
-function FooterNews() {
-  const [mail, setMail] = useState('');
-  const [err, setErr] = useState('');
-  const [done, setDone] = useState(false);
-  useEffect(() => setDone(!!read<string>('vault-list', '')), []);
-  if (done) return <p className="fnews__done">You are on the list. Next letter comes with the next drop.</p>;
-  return (
-    <form
-      className="fnews__form"
-      noValidate
-      onSubmit={(e) => {
-        e.preventDefault();
-        const v = validEmail(mail);
-        if (v) return setErr(v);
-        write('vault-list', mail.trim().toLowerCase());
-        write('promo-seen', true);
-        setDone(true);
-      }}
-    >
-      <label htmlFor="fnews-mail" className="sr-only">Email</label>
-      <input id="fnews-mail" type="email" autoComplete="email" inputMode="email" maxLength={120} placeholder="Email address" value={mail}
-        aria-invalid={!!err} aria-describedby={err ? 'fnews-err' : undefined}
-        onChange={(e) => { setMail(e.target.value); setErr(''); }} />
-      <button type="submit">Subscribe</button>
-      {err && <p id="fnews-err" className="fnews__err" role="alert">{err}</p>}
-    </form>
-  );
-}
 
 export function Footer() {
   const { setBagOpen } = useStore();
@@ -49,7 +21,7 @@ export function Footer() {
         <div className="fnews">
           <p className="footer__h">Newsletter</p>
           <p className="fnews__text">One letter a month. New drops first, nothing else.</p>
-          <FooterNews />
+          <Signal id="foot-mail" label="Email" done="You are on the list. Next letter comes with the next drop." />
         </div>
       </div>
       <div className="footer__grid">

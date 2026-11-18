@@ -6,6 +6,7 @@ import { ProductImg, Img } from '../components/Img';
 import { HudGrid, Mark, Type } from '../components/Hud';
 import { read, write } from '../lib/storage';
 import { email as validEmail } from '../lib/validate';
+import { Signal } from '../components/Signal';
 
 // Next drop: Friday 4 December 2026, 20:00 Prague time.
 const DROP = Date.UTC(2026, 11, 4, 19, 0, 0);
@@ -16,12 +17,12 @@ const TEASE = ['signal-zip-hoodie', 'decay-knit', 'fray-knit'].map((s) => PRODUC
  * word under a black bar. Fixed per name (no randomness), so the server and
  * the browser render the same thing.
  */
-function Secret({ name }: { name: string }) {
+function Secret({ name, i }: { name: string; i: number }) {
   const words = name.toUpperCase().split(' ');
   const hide = words.length > 1 ? words.length - 1 : -1; // the last word goes under a bar
   let h = [...name].reduce((a, c) => (a * 33 + c.charCodeAt(0)) >>> 0, 5);
   return (
-    <p className="drop__name" aria-label="Name hidden until the drop">
+    <p className="drop__name" aria-label="Name hidden until the drop" style={{ ['--gd' as string]: `${GLITCH[i % GLITCH.length][0]}s`, ['--gt' as string]: `${GLITCH[i % GLITCH.length][1]}s` }}>
       {words.map((w, i) => (
         <span key={i}>
           {i > 0 && ' '}
@@ -34,6 +35,10 @@ function Secret({ name }: { name: string }) {
     </p>
   );
 }
+
+// Delay and length of each name's glitch loop. Different lengths keep them
+// drifting out of step, so the order changes every round.
+const GLITCH = [[0.4, 4.3], [2.9, 5.7], [1.6, 3.6], [3.8, 6.4]];
 
 function Countdown() {
   const [now, setNow] = useState<number | null>(null); // null until mounted, so the prerender stays stable
@@ -113,14 +118,26 @@ export default function New() {
           <p className="mono muted">More on 4 December</p>
         </div>
         <ul className="drop__tease-grid">
-          {TEASE.map((p) => (
+          {TEASE.map((p, i) => (
             <li key={p.slug} className="drop__piece">
               <ProductImg src={p.image} alt="A piece from Drop 07, shown blurred until the release" />
-              <Secret name={p.name} />
+              <Secret name={p.name} i={i} />
               <span className="drop__veil mono" aria-hidden="true">Classified</span>
+              <a href="#drop-signal" className="drop__notify" onClick={(e) => { e.preventDefault(); const t = document.getElementById('drop-signal'); t?.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => t?.querySelector('input')?.focus({ preventScroll: true }), 700); }}>
+                Notify me
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9" /></svg>
+              </a>
             </li>
           ))}
         </ul>
+      </section>
+
+      <section id="drop-signal" className="drop__signal" data-theme="light" aria-labelledby="signal-title">
+        <div className="drop__signal-text">
+          <h2 id="signal-title" className="drop__signal-title">Be first in line.</h2>
+          <p className="muted">One email when Drop 07 opens. Nothing else.</p>
+        </div>
+        <Signal id="drop-signal-mail" label="Email for Drop 07" cta="Notify me" done="You are on the list for Drop 07." />
       </section>
 
       <section className="block drop__out" data-theme="light" aria-labelledby="out-title">
